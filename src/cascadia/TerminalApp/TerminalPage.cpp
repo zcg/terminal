@@ -13,8 +13,10 @@
 
 #include "../../types/inc/ColorFix.hpp"
 #include "../../types/inc/utils.hpp"
+#include "../inc/MaterialHelpers.h"
 #include "../TerminalSettingsAppAdapterLib/TerminalSettings.h"
 #include "App.h"
+#include "AppLogic.h"
 #include "DebugTapConnection.h"
 #include "MarkdownPaneContent.h"
 #include "Remoting.h"
@@ -50,9 +52,18 @@ using namespace winrt::Windows::UI::Xaml::Media;
 using namespace ::TerminalApp;
 using namespace ::Microsoft::Console;
 using namespace ::Microsoft::Terminal::Core;
+using namespace ::Microsoft::Terminal::MaterialHelpers;
 using namespace std::chrono_literals;
 
 #define HOOKUP_ACTION(action) _actionDispatch->action({ this, &TerminalPage::_Handle##action });
+
+namespace
+{
+    Color verticalTabSplitterColor()
+    {
+        return Color{ 0xff, 0x20, 0x20, 0x20 };
+    }
+}
 
 namespace winrt
 {
@@ -218,6 +229,12 @@ namespace clipboard
 
 namespace winrt::TerminalApp::implementation
 {
+    static constexpr double verticalTabSplitterLayoutWidth = 1.0;
+    static constexpr double verticalTabSplitterHitTestWidth = 8.0;
+    static constexpr double verticalTabPreviewLineWidth = 1.0;
+    static constexpr double verticalTabMinWidth = 120.0;
+    static constexpr double verticalTabMaxWidth = 480.0;
+
     TerminalPage::TerminalPage(TerminalApp::WindowProperties properties, const TerminalApp::ContentManager& manager) :
         _tabs{ winrt::single_threaded_observable_vector<TerminalApp::Tab>() },
         _mruTabs{ winrt::single_threaded_observable_vector<TerminalApp::Tab>() },
@@ -250,6 +267,7 @@ namespace winrt::TerminalApp::implementation
                         if (const auto& term{ pane->GetTerminalControl() })
                         {
                             term.OwningHwnd(reinterpret_cast<uint64_t>(hwnd));
+                            term.WindowBackgroundMaterialAvailable(_systemBackdropType != DWMSBT_NONE);
                         }
                     });
                 }
@@ -318,18 +336,42 @@ namespace winrt::TerminalApp::implementation
         return true;
     }
 
+    // Tabs may be reordered/torn out only when the OS allows drag/drop (not
+    // elevated or a different user - GH#15689) and the user hasn't disabled it.
+    bool TerminalPage::_tabDragDropEnabled() const
+    {
+        return CanDragDrop() && _settings.GlobalSettings().EnableTabDragDrop();
+    }
+
     void TerminalPage::Create()
     {
         // Hookup the key bindings
         _HookupKeyBindings(_settings.ActionMap());
 
+        _contentRoot = this->ContentRoot();
         _tabContent = this->TabContent();
         _tabRow = this->TabRow();
         _tabView = _tabRow.TabView();
         _rearranging = false;
+        _tabViewVertical = this->TabViewVertical();
+        // Wire up same events as the horizontal TabView
+        _tabViewVertical.SelectionChanged({ this, &TerminalPage::_OnTabSelectionChanged });
+        _tabViewVertical.TabCloseRequested({ this, &TerminalPage::_OnTabCloseRequested });
+        _tabViewVertical.AddTabButtonClick([weakThis{ get_weak() }](auto&&, auto&&) {
+            if (auto page{ weakThis.get() })
+            {
+                page->_OpenNewTerminalViaDropdown(nullptr);
+            }
+        });
+        const auto canDragDrop = _tabDragDropEnabled();
 
-        const auto canDragDrop = CanDragDrop();
+        _tabViewVertical.AllowDropTabs(canDragDrop);
+        _tabViewVertical.CanReorderTabs(false);
+        _tabViewVertical.CanDragTabs(canDragDrop);
+        _tabViewVertical.TabDragStarting({ get_weak(), &TerminalPage::_TabDragStarted });
+        _tabViewVertical.TabDragCompleted({ get_weak(), &TerminalPage::_TabDragCompleted });
 
+        _tabView.AllowDropTabs(canDragDrop);
         _tabView.CanReorderTabs(canDragDrop);
         _tabView.CanDragTabs(canDragDrop);
         _tabView.TabDragStarting({ get_weak(), &TerminalPage::_TabDragStarted });
@@ -353,37 +395,7 @@ namespace winrt::TerminalApp::implementation
             }
         });
 
-        if (_settings.GlobalSettings().ShowTabsInTitlebar())
-        {
-            // Remove the TabView from the page. We'll hang on to it, we need to
-            // put it in the titlebar.
-            uint32_t index = 0;
-            if (this->Root().Children().IndexOf(_tabRow, index))
-            {
-                this->Root().Children().RemoveAt(index);
-            }
-
-            // Inform the host that our titlebar content has changed.
-            SetTitleBarContent.raise(*this, _tabRow);
-
-            // GH#13143 Manually set the tab row's background to transparent here.
-            //
-            // We're doing it this way because ThemeResources are tricky. We
-            // default in XAML to using the appropriate ThemeResource background
-            // color for our TabRow. When tabs in the titlebar are _disabled_,
-            // this will ensure that the tab row has the correct theme-dependent
-            // value. When tabs in the titlebar are _enabled_ (the default),
-            // we'll switch the BG to Transparent, to let the Titlebar Control's
-            // background be used as the BG for the tab row.
-            //
-            // We can't do it the other way around (default to Transparent, only
-            // switch to a color when disabling tabs in the titlebar), because
-            // looking up the correct ThemeResource from and App dictionary is a
-            // capital-H Hard problem.
-            const auto transparent = Media::SolidColorBrush();
-            transparent.Color(Windows::UI::Colors::Transparent());
-            _tabRow.Background(transparent);
-        }
+        _ApplyTabPosition();
         _updateThemeColors();
 
         // Initialize the state of the CloseButtonOverlayMode property of
@@ -398,12 +410,15 @@ namespace winrt::TerminalApp::implementation
             {
             case Settings::Model::TabCloseButtonVisibility::Never:
                 _tabView.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::Auto);
+                _tabViewVertical.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::Auto);
                 break;
             case Settings::Model::TabCloseButtonVisibility::Hover:
                 _tabView.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::OnPointerOver);
+                _tabViewVertical.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::OnPointerOver);
                 break;
             default:
                 _tabView.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::Always);
+                _tabViewVertical.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::Always);
                 break;
             }
         }
@@ -427,6 +442,15 @@ namespace winrt::TerminalApp::implementation
             }
         });
         _newTabButton.Drop({ get_weak(), &TerminalPage::_NewTerminalByDrop });
+        // Wire up the vertical TabView's new tab button
+        auto vertNewTabBtn = this->VerticalNewTabButton();
+        vertNewTabBtn.Click([weakThis{ get_weak() }](auto&&, auto&&) {
+            if (auto page{ weakThis.get() })
+            {
+                page->_OpenNewTerminalViaDropdown(NewTerminalArgs());
+            }
+        });
+        vertNewTabBtn.Drop({ get_weak(), &TerminalPage::_NewTerminalByDrop });
         _tabView.SelectionChanged({ this, &TerminalPage::_OnTabSelectionChanged });
         _tabView.TabCloseRequested({ this, &TerminalPage::_OnTabCloseRequested });
         _tabView.TabItemsChanged({ this, &TerminalPage::_OnTabItemsChanged });
@@ -435,6 +459,10 @@ namespace winrt::TerminalApp::implementation
         _tabView.TabStripDragOver({ this, &TerminalPage::_onTabStripDragOver });
         _tabView.TabStripDrop({ this, &TerminalPage::_onTabStripDrop });
         _tabView.TabDroppedOutside({ this, &TerminalPage::_onTabDroppedOutside });
+        _tabViewVertical.TabDragStarting({ this, &TerminalPage::_onTabDragStarting });
+        _tabViewVertical.TabStripDragOver({ this, &TerminalPage::_onTabStripDragOver });
+        _tabViewVertical.TabStripDrop({ this, &TerminalPage::_onTabStripDrop });
+        _tabViewVertical.TabDroppedOutside({ this, &TerminalPage::_onTabDroppedOutside });
 
         _CreateNewTabFlyout();
 
@@ -478,6 +506,458 @@ namespace winrt::TerminalApp::implementation
                 _adjustProcessPriority();
             });
     }
+
+    // Method Description:
+    // - Rearranges the TerminalPage's root grid to place the tab strip at the
+    //   position indicated by the global TabPosition setting. For Top, the
+    //   existing behavior is preserved (tabs in titlebar or Row 0). For Bottom,
+    //   the tab row goes in the last row. For Left/Right, an outer 3-column
+    //   grid is created with a resizable splitter between the tab strip and the
+    //   content area.
+    // - Can be called multiple times. On re-entry it first tears down any
+    void TerminalPage::_ApplyTabPosition()
+    {
+        const auto newPos = _settings.GlobalSettings().TabBarPosition();
+        const auto newShowTabsInTitlebar = _settings.GlobalSettings().ShowTabsInTitlebar();
+
+        if (_tabPositionApplied &&
+            _tabPosition == newPos &&
+            _showTabsInTitlebarApplied == newShowTabsInTitlebar)
+        {
+            _UpdateTabView();
+            return;
+        }
+
+        auto root = this->Root();
+        auto infoBarPanel = this->InfoBarPanel();
+        const bool wasApplied = _tabPositionApplied;
+
+        if (!_tabStripSplitter)
+        {
+            _tabStripSplitter = WUX::Controls::Border{};
+            _tabStripSplitter.Width(verticalTabSplitterHitTestWidth);
+            _tabStripSplitter.MinWidth(verticalTabSplitterHitTestWidth);
+            _tabStripSplitter.HorizontalAlignment(WUX::HorizontalAlignment::Center);
+            _tabStripSplitter.VerticalAlignment(WUX::VerticalAlignment::Stretch);
+            _tabStripSplitter.Background(Media::SolidColorBrush{ verticalTabSplitterColor() });
+            _tabStripSplitter.IsHitTestVisible(true);
+
+            _tabStripPreviewTransform = Media::TranslateTransform{};
+            _tabStripPreviewLine = WUX::Controls::Border{};
+            _tabStripPreviewLine.Width(verticalTabPreviewLineWidth);
+            _tabStripPreviewLine.HorizontalAlignment(WUX::HorizontalAlignment::Left);
+            _tabStripPreviewLine.VerticalAlignment(WUX::VerticalAlignment::Stretch);
+            _tabStripPreviewLine.Background(Media::SolidColorBrush{ Windows::UI::Colors::Gray() });
+            _tabStripPreviewLine.Opacity(0.8);
+            _tabStripPreviewLine.Visibility(WUX::Visibility::Collapsed);
+            _tabStripPreviewLine.IsHitTestVisible(false);
+            _tabStripPreviewLine.RenderTransform(_tabStripPreviewTransform);
+
+            auto setSplitterCursor = [](const bool active) {
+                CoreWindow::GetForCurrentThread().PointerCursor(CoreCursor{ active ? CoreCursorType::SizeWestEast : CoreCursorType::Arrow, 0 });
+            };
+            auto isPointerOverSplitter = [](const WUX::Controls::Border& splitter, const WUX::Input::PointerRoutedEventArgs& args) {
+                const auto point = args.GetCurrentPoint(splitter).Position();
+                return point.X >= 0 &&
+                       point.X <= splitter.ActualWidth() &&
+                       point.Y >= 0 &&
+                       point.Y <= splitter.ActualHeight();
+            };
+
+            auto updatePreviewLine = [weakThis{ get_weak() }](const double width) {
+                if (auto page{ weakThis.get() })
+                {
+                    if (!page->_tabStripPreviewLine || !page->_tabStripPreviewTransform)
+                    {
+                        return;
+                    }
+
+                    const auto rootWidth = page->Root().ActualWidth();
+                    if (rootWidth <= 0)
+                    {
+                        return;
+                    }
+
+                    const auto halfPreviewWidth = verticalTabPreviewLineWidth / 2.0;
+                    const auto previewX = page->_tabPosition == TabPosition::Left ?
+                                              std::max(0.0, width - halfPreviewWidth) :
+                                              std::max(0.0, rootWidth - width - halfPreviewWidth);
+                    page->_tabStripPreviewTransform.X(previewX);
+                }
+            };
+
+            auto applyTabStripWidth = [weakThis{ get_weak() }]() {
+                if (auto page{ weakThis.get() })
+                {
+                    const auto newWidth = page->_pendingTabStripWidth;
+                    if (std::abs(page->_tabStripWidth - newWidth) < 0.5)
+                    {
+                        return;
+                    }
+
+                    const auto tabColIdx = page->_tabPosition == TabPosition::Left ? 0u : 2u;
+                    const auto columns = page->Root().ColumnDefinitions();
+                    if (columns.Size() > tabColIdx)
+                    {
+                        columns.GetAt(tabColIdx).Width(WUX::GridLengthHelper::FromPixels(newWidth));
+                        page->_tabStripWidth = newWidth;
+                    }
+                }
+            };
+
+            auto updateTabStripWidth = [weakThis{ get_weak() }, updatePreviewLine](const WUX::Input::PointerRoutedEventArgs& args) {
+                if (auto page{ weakThis.get() }; page && page->_splitterDragging)
+                {
+                    const auto currentX = args.GetCurrentPoint(page->Root()).Position().X;
+                    const auto delta = currentX - page->_splitterDragStartX;
+                    const auto directionAdjustedDelta = page->_tabPosition == TabPosition::Left ? delta : -delta;
+                    const auto newWidth = std::clamp(page->_splitterDragStartWidth + directionAdjustedDelta, verticalTabMinWidth, verticalTabMaxWidth);
+                    page->_pendingTabStripWidth = newWidth;
+                    updatePreviewLine(newWidth);
+                    args.Handled(true);
+                }
+            };
+
+            _tabStripSplitter.PointerEntered([setSplitterCursor](auto&&, const WUX::Input::PointerRoutedEventArgs&) {
+                setSplitterCursor(true);
+            });
+            _tabStripSplitter.PointerExited([weakThis{ get_weak() }, setSplitterCursor](auto&&, const WUX::Input::PointerRoutedEventArgs&) {
+                if (auto page{ weakThis.get() }; page && !page->_splitterDragging)
+                {
+                    setSplitterCursor(false);
+                }
+            });
+            _tabStripSplitter.PointerPressed([weakThis{ get_weak() }, setSplitterCursor, updatePreviewLine](auto&& sender, const WUX::Input::PointerRoutedEventArgs& args) {
+                if (auto page{ weakThis.get() })
+                {
+                    page->_splitterDragging = true;
+                    page->_splitterDragStartX = args.GetCurrentPoint(page->Root()).Position().X;
+                    page->_splitterDragStartWidth = page->_tabStripWidth;
+                    page->_pendingTabStripWidth = page->_tabStripWidth;
+                    if (page->_tabStripPreviewLine)
+                    {
+                        page->_tabStripPreviewLine.Visibility(WUX::Visibility::Visible);
+                    }
+                    updatePreviewLine(page->_tabStripWidth);
+                    setSplitterCursor(true);
+                    sender.as<WUX::UIElement>().CapturePointer(args.Pointer());
+                    args.Handled(true);
+                }
+            });
+            _tabStripSplitter.PointerMoved([updateTabStripWidth](auto&&, const WUX::Input::PointerRoutedEventArgs& args) {
+                updateTabStripWidth(args);
+            });
+            _tabStripSplitter.PointerReleased([weakThis{ get_weak() }, setSplitterCursor, isPointerOverSplitter, applyTabStripWidth](auto&& sender, const WUX::Input::PointerRoutedEventArgs& args) {
+                if (auto page{ weakThis.get() })
+                {
+                    const auto splitter = sender.as<WUX::Controls::Border>();
+                    const auto pointerOverSplitter = isPointerOverSplitter(splitter, args);
+                    page->_splitterDragging = false;
+                    applyTabStripWidth();
+                    if (page->_tabStripPreviewLine)
+                    {
+                        page->_tabStripPreviewLine.Visibility(WUX::Visibility::Collapsed);
+                    }
+                    setSplitterCursor(pointerOverSplitter);
+                    sender.as<WUX::UIElement>().ReleasePointerCaptures();
+                    args.Handled(true);
+                }
+            });
+            _tabStripSplitter.PointerCanceled([weakThis{ get_weak() }, setSplitterCursor](auto&& sender, const WUX::Input::PointerRoutedEventArgs& args) {
+                if (auto page{ weakThis.get() })
+                {
+                    page->_splitterDragging = false;
+                    if (page->_tabStripPreviewLine)
+                    {
+                        page->_tabStripPreviewLine.Visibility(WUX::Visibility::Collapsed);
+                    }
+                    setSplitterCursor(false);
+                    sender.as<WUX::UIElement>().ReleasePointerCaptures();
+                    args.Handled(true);
+                }
+            });
+        }
+
+        // CRITICAL: Clear the titlebar content BEFORE any Grid modifications.
+        if (wasApplied &&
+            _tabPosition == TabPosition::Top &&
+            _showTabsInTitlebarApplied &&
+            (newPos != TabPosition::Top || !newShowTabsInTitlebar))
+        {
+            // We're leaving the titlebar-hosted Top mode. Remove _tabRow from the titlebar
+            // before it is reattached to the page grid.
+            SetTitleBarContent.raise(*this, nullptr);
+        }
+
+        // Ensure all our managed children are in the root Grid.
+        // We NEVER remove them from Children — only change their attached
+        // properties (Grid.Row/Column/RowSpan). This prevents the TabView
+        // from being unloaded/reloaded, which would lose its tab items.
+        {
+            uint32_t idx;
+            if (!root.Children().IndexOf(_tabRow, idx))
+                root.Children().Append(_tabRow);
+            if (!root.Children().IndexOf(infoBarPanel, idx))
+                root.Children().Append(infoBarPanel);
+            if (!root.Children().IndexOf(_contentRoot, idx))
+                root.Children().Append(_contentRoot);
+            if (!root.Children().IndexOf(_tabStripSplitter, idx))
+                root.Children().Append(_tabStripSplitter);
+            if (_tabStripPreviewLine && !root.Children().IndexOf(_tabStripPreviewLine, idx))
+                root.Children().Append(_tabStripPreviewLine);
+        }
+
+        // Clear previous grid structure
+        root.ColumnDefinitions().Clear();
+        root.RowDefinitions().Clear();
+
+        _tabPosition = newPos;
+
+        switch (_tabPosition)
+        {
+        case TabPosition::Top:
+        {
+            root.RowDefinitions().Clear();
+            {
+                WUX::Controls::RowDefinition r0;
+                r0.Height(WUX::GridLengthHelper::FromValueAndType(1, WUX::GridUnitType::Auto));
+                root.RowDefinitions().Append(r0);
+            }
+            {
+                WUX::Controls::RowDefinition r1;
+                r1.Height(WUX::GridLengthHelper::FromValueAndType(1, WUX::GridUnitType::Auto));
+                root.RowDefinitions().Append(r1);
+            }
+            {
+                WUX::Controls::RowDefinition r2;
+                r2.Height(WUX::GridLengthHelper::FromValueAndType(1, WUX::GridUnitType::Star));
+                root.RowDefinitions().Append(r2);
+            }
+
+            WUX::Controls::Grid::SetRow(_tabRow, 0);
+            WUX::Controls::Grid::SetColumn(_tabRow, 0);
+            WUX::Controls::Grid::SetRowSpan(_tabRow, 1);
+
+            WUX::Controls::Grid::SetRow(infoBarPanel, 1);
+            WUX::Controls::Grid::SetColumn(infoBarPanel, 0);
+
+            WUX::Controls::Grid::SetRow(_contentRoot, 2);
+            WUX::Controls::Grid::SetColumn(_contentRoot, 0);
+            WUX::Controls::Grid::SetRowSpan(_contentRoot, 1);
+
+            _tabView.VerticalAlignment(WUX::VerticalAlignment::Bottom);
+            _tabRow.Visibility(WUX::Visibility::Visible);
+            _tabRow.Height(NAN);
+            _tabView.Visibility(WUX::Visibility::Visible);
+
+            if (newShowTabsInTitlebar)
+            {
+                uint32_t index = 0;
+                if (root.Children().IndexOf(_tabRow, index))
+                {
+                    root.Children().RemoveAt(index);
+                }
+
+                SetTitleBarContent.raise(*this, _tabRow);
+
+                const auto transparent = Media::SolidColorBrush();
+                transparent.Color(Windows::UI::Colors::Transparent());
+                _tabRow.Background(transparent);
+            }
+            // Restore horizontal TabView, hide vertical if it was active
+            _tabViewVertical.Visibility(WUX::Visibility::Collapsed);
+            _tabStripSplitter.Visibility(WUX::Visibility::Collapsed);
+            _tabStripPreviewLine.Visibility(WUX::Visibility::Collapsed);
+            _verticalTabActive = false;
+            for (const auto& tab : _tabs)
+            {
+                winrt::get_self<Tab>(tab)->SetVerticalTabActive(false);
+            }
+
+            break;
+        }
+        case TabPosition::Bottom:
+        {
+            _tabView.VerticalAlignment(WUX::VerticalAlignment::Bottom);
+
+            root.RowDefinitions().Clear();
+
+            WUX::Controls::RowDefinition row0;
+            row0.Height(WUX::GridLengthHelper::FromValueAndType(1, WUX::GridUnitType::Auto));
+            WUX::Controls::RowDefinition row1;
+            row1.Height(WUX::GridLengthHelper::FromValueAndType(1, WUX::GridUnitType::Star));
+            WUX::Controls::RowDefinition row2;
+            row2.Height(WUX::GridLengthHelper::FromValueAndType(1, WUX::GridUnitType::Auto));
+            root.RowDefinitions().Append(row0);
+            root.RowDefinitions().Append(row1);
+            root.RowDefinitions().Append(row2);
+
+            WUX::Controls::Grid::SetRow(infoBarPanel, 0);
+            WUX::Controls::Grid::SetColumn(infoBarPanel, 0);
+            WUX::Controls::Grid::SetRowSpan(infoBarPanel, 1);
+
+            WUX::Controls::Grid::SetRow(_contentRoot, 1);
+            WUX::Controls::Grid::SetColumn(_contentRoot, 0);
+            WUX::Controls::Grid::SetRowSpan(_contentRoot, 1);
+
+            WUX::Controls::Grid::SetRow(_tabRow, 2);
+            WUX::Controls::Grid::SetColumn(_tabRow, 0);
+            WUX::Controls::Grid::SetRowSpan(_tabRow, 1);
+            _tabRow.Visibility(WUX::Visibility::Visible);
+
+            root.UpdateLayout();
+            _tabViewVertical.Visibility(WUX::Visibility::Collapsed);
+            _tabStripSplitter.Visibility(WUX::Visibility::Collapsed);
+            _tabStripPreviewLine.Visibility(WUX::Visibility::Collapsed);
+            _verticalTabActive = false;
+            for (const auto& tab : _tabs)
+            {
+                winrt::get_self<Tab>(tab)->SetVerticalTabActive(false);
+            }
+            break;
+        }
+        case TabPosition::Left:
+        case TabPosition::Right:
+        {
+            // Same two-row, three-column layout for both Left and Right positions.
+            // The middle column hosts the splitter between the tab strip and content.
+
+            root.RowDefinitions().Clear();
+            {
+                WUX::Controls::RowDefinition infoRow;
+                infoRow.Height(WUX::GridLengthHelper::FromValueAndType(1, WUX::GridUnitType::Auto));
+                root.RowDefinitions().Append(infoRow);
+            }
+            {
+                WUX::Controls::RowDefinition contentRow;
+                contentRow.Height(WUX::GridLengthHelper::FromValueAndType(1, WUX::GridUnitType::Star));
+                root.RowDefinitions().Append(contentRow);
+            }
+
+            root.ColumnDefinitions().Clear();
+            WUX::Controls::ColumnDefinition tabCol;
+            tabCol.Width(WUX::GridLengthHelper::FromPixels(_tabStripWidth));
+            _pendingTabStripWidth = _tabStripWidth;
+            WUX::Controls::ColumnDefinition splitterCol;
+            splitterCol.Width(WUX::GridLengthHelper::FromPixels(verticalTabSplitterLayoutWidth));
+            WUX::Controls::ColumnDefinition contentCol;
+            contentCol.Width(WUX::GridLengthHelper::FromValueAndType(1, WUX::GridUnitType::Star));
+
+            const bool isLeft = (_tabPosition == TabPosition::Left);
+            const uint32_t tabColIdx = isLeft ? 0u : 2u;
+            const uint32_t splitterColIdx = 1u;
+            const uint32_t contentColIdx = isLeft ? 2u : 0u;
+
+            if (isLeft)
+            {
+                root.ColumnDefinitions().Append(tabCol);
+                root.ColumnDefinitions().Append(splitterCol);
+                root.ColumnDefinitions().Append(contentCol);
+            }
+            else
+            {
+                root.ColumnDefinitions().Append(contentCol);
+                root.ColumnDefinitions().Append(splitterCol);
+                root.ColumnDefinitions().Append(tabCol);
+            }
+            // Position _tabRow in tab column, spanning both rows
+            WUX::Controls::Grid::SetRow(_tabRow, 0);
+            WUX::Controls::Grid::SetColumn(_tabRow, tabColIdx);
+            WUX::Controls::Grid::SetRowSpan(_tabRow, 2);
+            _tabRow.HorizontalAlignment(WUX::HorizontalAlignment::Stretch);
+            _tabRow.VerticalAlignment(WUX::VerticalAlignment::Stretch);
+
+            // Position infoBarPanel
+            WUX::Controls::Grid::SetRow(infoBarPanel, 0);
+            WUX::Controls::Grid::SetColumn(infoBarPanel, contentColIdx);
+            WUX::Controls::Grid::SetRowSpan(infoBarPanel, 1);
+
+            // Position the content layer.
+            WUX::Controls::Grid::SetRow(_contentRoot, 1);
+            WUX::Controls::Grid::SetColumn(_contentRoot, contentColIdx);
+            WUX::Controls::Grid::SetRowSpan(_contentRoot, 1);
+            // Position _tabViewVertical in the same cell
+            WUX::Controls::Grid::SetRow(_tabViewVertical, 0);
+            WUX::Controls::Grid::SetColumn(_tabViewVertical, tabColIdx);
+            WUX::Controls::Grid::SetRowSpan(_tabViewVertical, 2);
+            _tabViewVertical.VerticalAlignment(WUX::VerticalAlignment::Stretch);
+
+            WUX::Controls::Grid::SetRow(_tabStripSplitter, 0);
+            WUX::Controls::Grid::SetColumn(_tabStripSplitter, splitterColIdx);
+            WUX::Controls::Grid::SetRowSpan(_tabStripSplitter, 2);
+            _tabStripSplitter.Visibility(WUX::Visibility::Visible);
+
+            WUX::Controls::Grid::SetRow(_tabStripPreviewLine, 0);
+            WUX::Controls::Grid::SetColumn(_tabStripPreviewLine, 0);
+            WUX::Controls::Grid::SetColumnSpan(_tabStripPreviewLine, 3);
+            WUX::Controls::Grid::SetRowSpan(_tabStripPreviewLine, 2);
+            _tabStripPreviewLine.Visibility(WUX::Visibility::Collapsed);
+
+            // Sync TabItems to the vertical TabView and show it
+            _tabViewVertical.Visibility(WUX::Visibility::Visible);
+            _tabRow.Visibility(WUX::Visibility::Collapsed);
+            _verticalTabActive = true;
+            for (const auto& tab : _tabs)
+            {
+                winrt::get_self<Tab>(tab)->SetVerticalTabActive(true);
+            }
+            _SyncVerticalTabItems();
+            _UpdateVerticalTabSelection();
+
+            // Force the layout to update, then on the next UI tick refresh
+            // the current tab's content. This ensures the content area is
+            // properly sized and interactive after the grid restructure.
+            root.UpdateLayout();
+            if (const auto focusedTab{ _GetFocusedTabImpl() })
+            {
+                const auto queue = winrt::Windows::System::DispatcherQueue::GetForCurrentThread();
+                queue.TryEnqueue(winrt::Windows::System::DispatcherQueuePriority::Low, [weakThis{ get_weak() }, focusedTab]() {
+                    if (auto page{ weakThis.get() })
+                    {
+                        page->_UpdatedSelectedTab(*focusedTab);
+                    }
+                });
+            }
+        }
+        }
+
+        _tabPositionApplied = true;
+        _showTabsInTitlebarApplied = newShowTabsInTitlebar;
+        _UpdateTabView();
+    }
+
+    // Method Description:
+    // - Sync TabItems from _tabs to _tabViewVertical, using TabViewItemVertical per tab.
+    // - Also migrates old-style tabs (TextBlock header) to use _headerControlVertical.
+    void TerminalPage::_SyncVerticalTabItems()
+    {
+        _tabViewVertical.TabItems().Clear();
+        for (const auto& tab : _tabs)
+        {
+            auto tabImpl{ winrt::get_self<implementation::Tab>(tab) };
+            auto tvi = tabImpl->TabViewItemVertical();
+            // Migration: if this tab was created in an older build, its
+            // TabViewItemVertical header might be a TextBlock. Replace it
+            // with the TabHeaderControl for full functionality.
+            if (tvi.Header().try_as<WUX::Controls::TextBlock>())
+            {
+                tvi.Header(tabImpl->GetHeaderControlVertical());
+            }
+            _tabViewVertical.TabItems().Append(tvi);
+        }
+    }
+
+    // Method Description:
+    // - Sync the selected tab from the horizontal TabView to the vertical TabView.
+    void TerminalPage::_UpdateVerticalTabSelection()
+    {
+        if (_tabViewVertical.TabItems().Size() > 0)
+        {
+            _tabViewVertical.SelectedIndex(_tabView.SelectedIndex());
+        }
+    }
+
+    // Method Description:
 
     Windows::UI::Xaml::Automation::Peers::AutomationPeer TerminalPage::OnCreateAutomationPeer()
     {
@@ -1141,6 +1621,10 @@ namespace winrt::TerminalApp::implementation
             }
         });
         _newTabButton.Flyout(newTabFlyout);
+        if (auto vertBtn = this->VerticalNewTabButton())
+        {
+            vertBtn.Flyout(newTabFlyout);
+        }
     }
 
     // Method Description:
@@ -1435,7 +1919,15 @@ namespace winrt::TerminalApp::implementation
     // Shows the dropdown flyout.
     void TerminalPage::_OpenNewTabDropdown()
     {
-        _newTabButton.Flyout().ShowAt(_newTabButton);
+        if (_verticalTabActive)
+        {
+            const auto verticalNewTabButton = this->VerticalNewTabButton();
+            verticalNewTabButton.Flyout().ShowAt(verticalNewTabButton);
+        }
+        else
+        {
+            _newTabButton.Flyout().ShowAt(_newTabButton);
+        }
     }
 
     void TerminalPage::_OpenNewTerminalViaDropdown(const NewTerminalArgs newTerminalArgs)
@@ -2860,6 +3352,12 @@ namespace winrt::TerminalApp::implementation
             }
             // else: This shouldn't really be possible, because the tab we _just_ opened should be active.
         }
+        // If vertical TabView is active, sync newly added tabs
+        if (_verticalTabActive)
+        {
+            _SyncVerticalTabItems();
+            _UpdateVerticalTabSelection();
+        }
     }
 
     // Method Description:
@@ -3745,6 +4243,7 @@ namespace winrt::TerminalApp::implementation
         {
             term.OwningHwnd(reinterpret_cast<uint64_t>(*_hostingHwnd));
         }
+        term.WindowBackgroundMaterialAvailable(_systemBackdropType != DWMSBT_NONE);
 
         term.KeyBindings(*_bindings);
 
@@ -4061,7 +4560,7 @@ namespace winrt::TerminalApp::implementation
     //   This includes update the settings of all the tabs according
     //   to their profiles, update the title and icon of each tab, and
     //   finally create the tab flyout
-    void TerminalPage::_RefreshUIForSettingsReload()
+    void TerminalPage::_RefreshUIForSettingsReload(const bool updateSettingsTab)
     {
         // Re-wire the keybindings to their handlers, as we'll have created a
         // new AppKeyBindings object.
@@ -4080,7 +4579,10 @@ namespace winrt::TerminalApp::implementation
             if (auto tabImpl{ _GetTabImpl(tab) })
             {
                 // Let the tab know that there are new settings. It's up to each content to decide what to do with them.
-                tabImpl->UpdateSettings(_settings);
+                if (updateSettingsTab || tab != _settingsTab)
+                {
+                    tabImpl->UpdateSettings(_settings);
+                }
 
                 // Update the icon of the tab for the currently focused profile in that tab.
                 // Only do this for TerminalTabs. Other types of tabs won't have multiple panes
@@ -4123,6 +4625,18 @@ namespace winrt::TerminalApp::implementation
 
         _tabRow.ShowElevationShield(IsRunningElevated() && _settings.GlobalSettings().ShowAdminShield());
 
+        // Re-apply on hot-reload so toggling enableTabDragDrop takes effect.
+        // Stays off when drag/drop would crash us anyway (elevated / different
+        // user - see Utils::CanUwpDragDrop). GH#15689.
+        {
+            const auto canDragDrop = _tabDragDropEnabled();
+            _tabView.AllowDropTabs(canDragDrop);
+            _tabView.CanReorderTabs(canDragDrop);
+            _tabView.CanDragTabs(canDragDrop);
+            _tabViewVertical.AllowDropTabs(canDragDrop);
+            _tabViewVertical.CanDragTabs(canDragDrop);
+        }
+
         // Apply the ShowWorkspacesButton theme setting.
         if (const auto theme = _settings.GlobalSettings().CurrentTheme())
         {
@@ -4131,6 +4645,9 @@ namespace winrt::TerminalApp::implementation
 
         Media::SolidColorBrush transparent{ Windows::UI::Colors::Transparent() };
         _tabView.Background(transparent);
+
+        // Apply the tab strip position (top/bottom/left/right) setting.
+        _ApplyTabPosition();
 
         ////////////////////////////////////////////////////////////////////////
         // Begin Theme handling
@@ -4164,13 +4681,16 @@ namespace winrt::TerminalApp::implementation
         {
         case Settings::Model::TabCloseButtonVisibility::Never:
             _tabView.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::Auto);
+            _tabViewVertical.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::Auto);
             break;
         case Settings::Model::TabCloseButtonVisibility::Hover:
             _tabView.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::OnPointerOver);
+            _tabViewVertical.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::OnPointerOver);
             break;
         case Settings::Model::TabCloseButtonVisibility::ActiveOnly:
         default:
             _tabView.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::Always);
+            _tabViewVertical.CloseButtonOverlayMode(MUX::Controls::TabViewCloseButtonOverlayMode::Always);
             break;
         }
     }
@@ -4439,9 +4959,11 @@ namespace winrt::TerminalApp::implementation
         // returns to us the dark theme brushes. There's gotta be a way to get
         // the right brushes...
         // See also GH#5741
+        const auto requestedTheme = _settings.GlobalSettings().CurrentTheme().RequestedTheme();
+
         if (res.HasKey(defaultBackgroundKey))
         {
-            auto obj = res.Lookup(defaultBackgroundKey);
+            const auto obj = ThemeLookup(res, requestedTheme, defaultBackgroundKey);
             backgroundBrush = obj.try_as<winrt::Windows::UI::Xaml::Media::SolidColorBrush>();
         }
         else
@@ -4451,7 +4973,7 @@ namespace winrt::TerminalApp::implementation
 
         if (res.HasKey(defaultForegroundKey))
         {
-            auto obj = res.Lookup(defaultForegroundKey);
+            const auto obj = ThemeLookup(res, requestedTheme, defaultForegroundKey);
             foregroundBrush = obj.try_as<winrt::Windows::UI::Xaml::Media::SolidColorBrush>();
         }
         else
@@ -4611,6 +5133,48 @@ namespace winrt::TerminalApp::implementation
             }
         });
 
+        settingsContent->OnSettingsSaved = [weakThis{ get_weak() }](const CascadiaSettings& savedSettings) {
+            if (auto page{ weakThis.get() })
+            {
+                // Defer the layout change so it runs after the current event handler
+                // (Save button click) completes. Calling _ApplyTabPosition() synchronously
+                // would modify the visual tree while SetWindowPos (triggered by
+                // SetTitleBarContent) re-enters the message loop, causing a crash.
+                const auto queue = winrt::Windows::System::DispatcherQueue::GetForCurrentThread();
+                queue.TryEnqueue(winrt::Windows::System::DispatcherQueuePriority::Low, [weakThis, savedSettings]() {
+                    if (auto page{ weakThis.get() })
+                    {
+                        const auto oldPos = page->_settings.GlobalSettings().TabBarPosition();
+                        const auto newPos = savedSettings.GlobalSettings().TabBarPosition();
+
+                        page->SetSettings(savedSettings, false);
+
+                        if (oldPos != newPos)
+                        {
+                            page->_ApplyTabPosition();
+                            page->_UpdateTabView();
+                            page->_updateThemeColors();
+
+                            if (page->_settingsTab)
+                            {
+                                page->_tabView.SelectedItem(page->_settingsTab.TabViewItem());
+                                if (page->_verticalTabActive)
+                                {
+                                    const auto settingsTabImpl{ winrt::get_self<Tab>(page->_settingsTab) };
+                                    page->_tabViewVertical.SelectedItem(settingsTabImpl->TabViewItemVertical());
+                                }
+                                page->_UpdatedSelectedTab(page->_settingsTab);
+                            }
+                        }
+                        else
+                        {
+                            page->_RefreshUIForSettingsReload(false);
+                        }
+                    }
+                });
+            }
+        };
+
         return *settingsContent;
     }
 
@@ -4632,7 +5196,10 @@ namespace winrt::TerminalApp::implementation
         }
         else
         {
-            _tabView.SelectedItem(_settingsTab.TabViewItem());
+            if (const auto index{ _GetTabIndex(_settingsTab) })
+            {
+                _SelectTab(*index);
+            }
         }
     }
 
@@ -5175,28 +5742,77 @@ namespace winrt::TerminalApp::implementation
             }
         }
 
+        const auto applicationMaterial{ ResolveApplicationBackgroundMaterial(
+            theme,
+            _settings.GlobalSettings().ApplicationBackgroundMaterial()) };
+        const auto requiredSystemBackdrop = SystemBackdropForMaterial(applicationMaterial);
+        const auto windowMaterialAvailable = requiredSystemBackdrop != DWMSBT_NONE &&
+                                             _systemBackdropType == requiredSystemBackdrop;
+        const auto acrylicAllowedWhenUnfocused = _activated || _settings.GlobalSettings().EnableUnfocusedAcrylic();
+        // Honor legacy useAcrylicInTabRow when not already drawing over DWM chrome.
+        const auto useWindowMaterialInTabRow = ShouldUseWindowMaterialInTabRow(applicationMaterial, windowMaterialAvailable);
+        const auto useAcrylicInTabRow = ShouldUseXamlAcrylicInTabRow(applicationMaterial,
+                                                                     _settings.GlobalSettings().UseAcrylicInTabRow(),
+                                                                     windowMaterialAvailable,
+                                                                     acrylicAllowedWhenUnfocused);
+
         // GH#19604: Get the theme's tabRow color to use as the acrylic tint.
         const auto tabRowBg{ theme.TabRow() ? (_activated ? theme.TabRow().Background() :
                                                             theme.TabRow().UnfocusedBackground()) :
                                               ThemeColor{ nullptr } };
 
-        if (_settings.GlobalSettings().UseAcrylicInTabRow() && (_activated || _settings.GlobalSettings().EnableUnfocusedAcrylic()))
+        if (useAcrylicInTabRow)
         {
+            const auto useDarkAcrylic = IsAcrylicDark(applicationMaterial);
             if (tabRowBg)
             {
                 bgColor = ThemeColor::ColorFromBrush(tabRowBg.Evaluate(res, terminalBrush, true));
             }
+            if (useDarkAcrylic)
+            {
+                bgColor = AcrylicDarkSolidTint;
+            }
 
-            const auto acrylicBrush = Media::AcrylicBrush();
-            acrylicBrush.BackgroundSource(Media::AcrylicBackgroundSource::HostBackdrop);
-            acrylicBrush.FallbackColor(bgColor);
-            acrylicBrush.TintColor(bgColor);
-            acrylicBrush.TintOpacity(0.5);
+            if (!_tabRowAcrylicBrush)
+            {
+                _tabRowAcrylicBrush = Media::AcrylicBrush();
+            }
+            const auto tintOpacity = useDarkAcrylic ? AcrylicDarkTintOpacity : AcrylicDefaultTintOpacity;
+            auto tabRowSource = Media::AcrylicBackgroundSource::HostBackdrop;
+            if (const auto termAcrylic = terminalBrush.try_as<Media::AcrylicBrush>())
+            {
+                if (termAcrylic.BackgroundSource() == Media::AcrylicBackgroundSource::Backdrop)
+                {
+                    tabRowSource = Media::AcrylicBackgroundSource::Backdrop;
+                }
+            }
 
-            TitlebarBrush(acrylicBrush);
+            const auto needsNewBrush = !_tabRowAcrylicBrush ||
+                                       _tabRowAcrylicBrush.BackgroundSource() != tabRowSource ||
+                                       _tabRowAcrylicBrush.TintOpacity() != tintOpacity ||
+                                       til::color{ _tabRowAcrylicBrush.TintColor() } != bgColor;
+            if (needsNewBrush)
+            {
+                _tabRowAcrylicBrush = Media::AcrylicBrush();
+                _tabRowAcrylicBrush.BackgroundSource(tabRowSource);
+                _tabRowAcrylicBrush.TintOpacity(tintOpacity);
+                _tabRowAcrylicBrush.FallbackColor(bgColor);
+                _tabRowAcrylicBrush.TintColor(bgColor);
+            }
+
+            TitlebarBrush(_tabRowAcrylicBrush);
+        }
+        else if (useWindowMaterialInTabRow)
+        {
+            _tabRowAcrylicBrush = nullptr;
+            bgColor = IsAcrylicDark(applicationMaterial) ?
+                          AcrylicDarkOverlayTint :
+                          Windows::UI::Colors::Transparent();
+            TitlebarBrush(Media::SolidColorBrush{ bgColor });
         }
         else if (tabRowBg)
         {
+            _tabRowAcrylicBrush = nullptr;
             const auto themeBrush{ tabRowBg.Evaluate(res, terminalBrush, true) };
             bgColor = ThemeColor::ColorFromBrush(themeBrush);
             // If the tab content returned nullptr for the terminalBrush, we
@@ -5206,13 +5822,22 @@ namespace winrt::TerminalApp::implementation
         }
         else
         {
+            _tabRowAcrylicBrush = nullptr;
             // Nothing was set in the theme - fall back to our original `TabViewBackground` color.
             TitlebarBrush(backgroundSolidBrush);
         }
 
-        if (!_settings.GlobalSettings().ShowTabsInTitlebar())
+        // Check if tabs are actually in the titlebar: ShowTabsInTitlebar only applies at Top position.
+        const bool tabsInTitlebar = _settings.GlobalSettings().ShowTabsInTitlebar() &&
+                                     _settings.GlobalSettings().TabBarPosition() == TabPosition::Top;
+        if (!tabsInTitlebar)
         {
             _tabRow.Background(TitlebarBrush());
+            _tabViewVertical.Background(TitlebarBrush());
+            if (_tabStripSplitter)
+            {
+                _tabStripSplitter.Background(Media::SolidColorBrush{ verticalTabSplitterColor() });
+            }
         }
 
         // Second: Update the colors of our individual TabViewItems. This
@@ -5232,7 +5857,21 @@ namespace winrt::TerminalApp::implementation
         // Update the new tab button to have better contrast with the new color.
         // In theory, it would be convenient to also change these for the
         // inactive tabs as well, but we're leaving that as a follow up.
-        _SetNewTabButtonColor(bgColor, bgColor);
+        auto newTabButtonContrastColor = bgColor;
+        if (useWindowMaterialInTabRow || useAcrylicInTabRow)
+        {
+            if (IsAcrylicDark(applicationMaterial))
+            {
+                newTabButtonContrastColor = Colors::Black();
+            }
+            else
+            {
+                const auto effectiveRequestedTheme = requestedTheme == WUX::ElementTheme::Default ? ActualTheme() : requestedTheme;
+                newTabButtonContrastColor = effectiveRequestedTheme == WUX::ElementTheme::Light ? Colors::White() :
+                                                                                                  Colors::Black();
+            }
+        }
+        _SetNewTabButtonColor(newTabButtonContrastColor, bgColor);
 
         // Third: the window frame. This is basically the same logic as the tab row background.
         // We'll set our `FrameBrush` property, for the window to later use.
@@ -5415,6 +6054,11 @@ namespace winrt::TerminalApp::implementation
 
     void TerminalPage::WindowActivated(const bool activated)
     {
+        if (_activated == activated)
+        {
+            return;
+        }
+
         // Stash if we're activated. Use that when we reload
         // the settings, change active panes, etc.
         _activated = activated;
@@ -5436,6 +6080,31 @@ namespace winrt::TerminalApp::implementation
                 });
             }
         }
+    }
+
+    void TerminalPage::SystemBackdropType(const int32_t systemBackdropType)
+    {
+        if (_systemBackdropType == systemBackdropType)
+        {
+            return;
+        }
+
+        _systemBackdropType = systemBackdropType;
+        const auto available = systemBackdropType != DWMSBT_NONE;
+        for (const auto& tab : _tabs)
+        {
+            if (const auto tabImpl = _GetTabImpl(tab))
+            {
+                tabImpl->GetRootPane()->WalkTree([&](auto&& pane) {
+                    if (const auto& term = pane->GetTerminalControl())
+                    {
+                        term.WindowBackgroundMaterialAvailable(available);
+                    }
+                });
+            }
+        }
+
+        _updateThemeColors();
     }
 
     safe_void_coroutine TerminalPage::_ControlCompletionsChangedHandler(const IInspectable sender,
@@ -5983,6 +6652,21 @@ namespace winrt::TerminalApp::implementation
     void TerminalPage::_onTabDragStarting(const winrt::Microsoft::UI::Xaml::Controls::TabView&,
                                           const winrt::Microsoft::UI::Xaml::Controls::TabViewTabDragStartingEventArgs& e)
     {
+        // CanReorderTabs/CanDragTabs don't reliably update after the TabView is
+        // live, so gate here too: this makes enableTabDragDrop take effect
+        // without a restart and blocks the drag that would fail-fast us when
+        // elevated or running as a different user. GH#15689.
+        if (!_tabDragDropEnabled())
+        {
+            // _TabDragStarted (subscribed first) already set _rearranging; a
+            // cancelled drag raises no TabDragCompleted to clear it, so undo it.
+            _rearranging = false;
+            _rearrangeFrom = std::nullopt;
+            _rearrangeTo = std::nullopt;
+            e.Cancel(true);
+            return;
+        }
+
         // Get the tab impl from this event.
         const auto eventTab = e.Tab();
         const auto tabBase = _GetTabByTabViewItem(eventTab);
@@ -6049,7 +6733,7 @@ namespace winrt::TerminalApp::implementation
     // - Called on the TARGET of a tab drag/drop. We'll unpack the DataPackage
     //   to find who the tab came from. We'll then ask the Monarch to ask the
     //   sender to move that tab to us.
-    void TerminalPage::_onTabStripDrop(winrt::Windows::Foundation::IInspectable /*sender*/,
+    void TerminalPage::_onTabStripDrop(winrt::Windows::Foundation::IInspectable sender,
                                        winrt::Windows::UI::Xaml::DragEventArgs e)
     {
         // Get the PID and make sure it is the same as ours.
@@ -6084,14 +6768,22 @@ namespace winrt::TerminalApp::implementation
         auto index = -1;
 
         // Determine which items in the list our pointer is between.
-        for (auto i = 0u; i < _tabView.TabItems().Size(); i++)
+        const auto tabView = sender.try_as<winrt::MUX::Controls::TabView>();
+        if (!tabView)
         {
-            if (const auto& item{ _tabView.ContainerFromIndex(i).try_as<winrt::MUX::Controls::TabViewItem>() })
+            return;
+        }
+
+        const bool isVerticalDrop = tabView == _tabViewVertical;
+        for (auto i = 0u; i < tabView.TabItems().Size(); i++)
+        {
+            if (const auto& item{ tabView.ContainerFromIndex(i).try_as<winrt::MUX::Controls::TabViewItem>() })
             {
-                const auto posX{ e.GetPosition(item).X }; // The point of the drop, relative to the tab
-                const auto itemWidth{ item.ActualWidth() }; // The right of the tab
-                // If the drag point is on the left half of the tab, then insert here.
-                if (posX < itemWidth / 2)
+                const auto dropPosition{ e.GetPosition(item) };
+                const auto dropOffset{ isVerticalDrop ? dropPosition.Y : dropPosition.X };
+                const auto itemExtent{ isVerticalDrop ? item.ActualHeight() : item.ActualWidth() };
+                // If the drag point is on the first half of the tab, then insert here.
+                if (dropOffset < itemExtent / 2)
                 {
                     index = i;
                     break;

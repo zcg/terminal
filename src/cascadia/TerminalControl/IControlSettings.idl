@@ -72,6 +72,7 @@ namespace Microsoft.Terminal.Control
         Microsoft.Terminal.Control.DefaultInputScope DefaultInputScope { get; };
         Boolean ShowMarks { get; };
         Boolean UseBackgroundImageForWindow { get; };
+        Boolean UseWindowBackgroundMaterial { get; };
         Boolean RightClickContextMenu { get; };
         Boolean RepositionCursorWithMouse { get; };
 

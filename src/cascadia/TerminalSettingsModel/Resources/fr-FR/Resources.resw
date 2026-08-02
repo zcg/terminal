@@ -453,6 +453,9 @@
   <data name="ToggleAlwaysOnTopCommandKey" xml:space="preserve">
     <value>Activer le mode Toujours visible</value>
   </data>
+  <data name="ToggleVerticalTabsCommandKey" xml:space="preserve">
+    <value>Toggle vertical tabs</value>
+  </data>
   <data name="ToggleCommandPaletteCommandKey" xml:space="preserve">
     <value>Activer/désactiver la palette de commandes</value>
   </data>

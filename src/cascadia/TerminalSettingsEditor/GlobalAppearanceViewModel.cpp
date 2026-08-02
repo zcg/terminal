@@ -27,8 +27,40 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         _ThemeList{ single_threaded_observable_vector<Model::Theme>() }
     {
         INITIALIZE_BINDABLE_ENUM_SETTING(NewTabPosition, NewTabPosition, NewTabPosition, L"Globals_NewTabPosition", L"Content");
+        INITIALIZE_BINDABLE_ENUM_SETTING(TabPosition, TabPosition, TabPosition, L"Globals_TabPosition", L"Content");
         INITIALIZE_BINDABLE_ENUM_SETTING(TabWidthMode, TabViewWidthMode, winrt::Microsoft::UI::Xaml::Controls::TabViewWidthMode, L"Globals_TabWidthMode", L"Content");
+
+        std::vector<Editor::EnumEntry> applicationBackgroundMaterialList;
+        _ApplicationBackgroundMaterialMap = single_threaded_map<Model::BackgroundMaterial, Editor::EnumEntry>();
+        for (auto [key, value] : Model::EnumMappings::BackgroundMaterial())
+        {
+            const auto enumName = LocalizedNameForEnumName(L"Globals_ApplicationBackgroundMaterial", key, L"Content");
+            auto entry = make<implementation::EnumEntry>(enumName, box_value<Model::BackgroundMaterial>(value), static_cast<int32_t>(value));
+            _ApplicationBackgroundMaterialMap.Insert(value, entry);
+            applicationBackgroundMaterialList.emplace_back(entry);
+        }
+        std::sort(applicationBackgroundMaterialList.begin(), applicationBackgroundMaterialList.end(), EnumEntryComparator<Model::BackgroundMaterial>());
+        _ApplicationBackgroundMaterialList = single_threaded_observable_vector<Editor::EnumEntry>(std::move(applicationBackgroundMaterialList));
+
         _UpdateThemeList();
+    }
+
+    Windows::Foundation::Collections::IObservableVector<Editor::EnumEntry> GlobalAppearanceViewModel::ApplicationBackgroundMaterialList()
+    {
+        return _ApplicationBackgroundMaterialList;
+    }
+
+    winrt::Windows::Foundation::IInspectable GlobalAppearanceViewModel::CurrentApplicationBackgroundMaterial()
+    {
+        return box_value<Editor::EnumEntry>(_ApplicationBackgroundMaterialMap.Lookup(_GlobalSettings.ApplicationBackgroundMaterial()));
+    }
+
+    void GlobalAppearanceViewModel::CurrentApplicationBackgroundMaterial(const winrt::Windows::Foundation::IInspectable& enumEntry)
+    {
+        if (const auto ee = enumEntry.try_as<Editor::EnumEntry>())
+        {
+            _GlobalSettings.ApplicationBackgroundMaterial(unbox_value<Model::BackgroundMaterial>(ee.EnumValue()));
+        }
     }
 
     // Function Description:
@@ -119,4 +151,5 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
             AlwaysShowTabs(true);
         }
     }
+
 }

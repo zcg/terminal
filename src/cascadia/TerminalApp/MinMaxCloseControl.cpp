@@ -95,9 +95,14 @@ namespace winrt::TerminalApp::implementation
 
     void MinMaxCloseControl::Focused(bool focused)
     {
+        if (_focused == focused)
+        {
+            return;
+        }
+
         _focused = focused;
 
-        ReleaseButtons();
+        _ReleaseButtons(true);
     }
 
     void MinMaxCloseControl::SetWindowVisualState(WindowVisualState visualState)
@@ -166,6 +171,11 @@ namespace winrt::TerminalApp::implementation
     // - button: the button that was hovered
     void MinMaxCloseControl::HoverButton(CaptionButton button)
     {
+        if (!_lastPressedButton && _lastHoveredButton && _lastHoveredButton.value() == button)
+        {
+            return;
+        }
+
         // Keep track of the button that's been pressed. we get a mouse move
         // message when we open the tooltip. If we move the mouse on top of this
         // button, that we've already pressed, then no need to move to the
@@ -207,6 +217,8 @@ namespace winrt::TerminalApp::implementation
             _displayToolTip->Run(CloseButton());
             break;
         }
+
+        _lastHoveredButton = button;
     }
 
     // Method Description:
@@ -236,6 +248,7 @@ namespace winrt::TerminalApp::implementation
             VisualStateManager::GoToState(CloseButton(), L"Pressed", true);
             break;
         }
+        _lastHoveredButton = button;
         _lastPressedButton = button;
     }
 
@@ -244,6 +257,16 @@ namespace winrt::TerminalApp::implementation
     //   to the normal state, and dismiss the tooltips.
     void MinMaxCloseControl::ReleaseButtons()
     {
+        _ReleaseButtons(false);
+    }
+
+    void MinMaxCloseControl::_ReleaseButtons(bool forceUpdate)
+    {
+        if (!forceUpdate && !_lastHoveredButton && !_lastPressedButton)
+        {
+            return;
+        }
+
         _displayToolTip->Run(nullptr);
         VisualStateManager::GoToState(MinimizeButton(), _normalState(), true);
         VisualStateManager::GoToState(MaximizeButton(), _normalState(), true);
@@ -253,6 +276,7 @@ namespace winrt::TerminalApp::implementation
         closeToolTipForButton(MaximizeButton());
         closeToolTipForButton(CloseButton());
 
+        _lastHoveredButton = std::nullopt;
         _lastPressedButton = std::nullopt;
     }
 

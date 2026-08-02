@@ -280,6 +280,30 @@
     <value>Αƒŧëѓ ťнė сúѓŗėπτ τăъ !!! !!!</value>
     <comment>An option to choose from for the "Position of newly created tabs" setting. When selected new tab appears after the current tab.</comment>
   </data>
+  <data name="Globals_TabPosition.Header" xml:space="preserve">
+    <value>Tab bar position</value>
+    <comment>Header for a control to select where the tab strip is shown.</comment>
+  </data>
+  <data name="Globals_TabPosition.HelpText" xml:space="preserve">
+    <value>Controls where the tab strip is shown: top, bottom, left, or right side of the window.</value>
+    <comment>A description for what the "tab bar position" setting does.</comment>
+  </data>
+  <data name="Globals_TabPositionTop.Content" xml:space="preserve">
+    <value>Top</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
+  <data name="Globals_TabPositionBottom.Content" xml:space="preserve">
+    <value>Bottom</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
+  <data name="Globals_TabPositionLeft.Content" xml:space="preserve">
+    <value>Left (vertical)</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
+  <data name="Globals_TabPositionRight.Content" xml:space="preserve">
+    <value>Right (vertical)</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
   <data name="Globals_CopyOnSelect.Header" xml:space="preserve">
     <value>Āúтǿmаţιĉąľľў сοφý şèℓэċтïøñ ţō ĉļĩρьóąґď !!! !!! !!! !!!</value>
     <comment>Header for a control to toggle whether selected text should be copied to the clipboard automatically, or not.</comment>
@@ -512,10 +536,6 @@
   <data name="Globals_ShowTitlebar.HelpText" xml:space="preserve">
     <value>Ẃћèп ðϊŝαъłėð, тнė ťĭτłê вąѓ ẁιĺł ąφφёǻŕ äвöνė ŧħė ťãьś. !!! !!! !!! !!! !!! !</value>
     <comment>A description for what the "show titlebar" setting does. Presented near "Globals_ShowTitlebar.Header".</comment>
-  </data>
-  <data name="Globals_AcrylicTabRow.Header" xml:space="preserve">
-    <value>Ūŝē àςѓýłīć мãτęѓįάł ϊή ťнę ťāъ гоω !!! !!! !!! !</value>
-    <comment>Header for a control to toggle whether "acrylic material" is used. "Acrylic material" is a Microsoft-specific term: https://docs.microsoft.com/en-us/windows/apps/design/style/acrylic</comment>
   </data>
   <data name="Globals_ShowTitleInTitlebar.Header" xml:space="preserve">
     <value>Ůŝě å¢ťįνέ τèґmĭŉαĺ τįτľé äš дρφℓīĉатĭǿŉ ţιţľē !!! !!! !!! !!! !</value>

@@ -12,6 +12,10 @@ namespace winrt::TerminalApp::implementation
     public:
         SettingsPaneContent(winrt::Microsoft::Terminal::Settings::Model::CascadiaSettings settings);
 
+        // Callback invoked when the user saves settings in the Settings UI,
+        // so the TerminalPage can reapply settings immediately.
+        std::function<void(const winrt::Microsoft::Terminal::Settings::Model::CascadiaSettings&)> OnSettingsSaved;
+
         void UpdateSettings(const winrt::Microsoft::Terminal::Settings::Model::CascadiaSettings& settings);
 
         winrt::Windows::UI::Xaml::FrameworkElement GetRoot();
@@ -35,5 +39,6 @@ namespace winrt::TerminalApp::implementation
     private:
         winrt::Microsoft::Terminal::Settings::Editor::MainPage _sui{ nullptr };
         winrt::Windows::UI::Xaml::ElementTheme _requestedTheme;
+        winrt::Microsoft::Terminal::Settings::Editor::MainPage::SettingsSaved_revoker _settingsSavedRevoker;
     };
 }

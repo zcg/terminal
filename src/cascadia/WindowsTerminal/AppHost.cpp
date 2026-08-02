@@ -7,10 +7,12 @@
 #include <dwmapi.h>
 #include <TerminalThemeHelpers.h>
 #include <til/latch.h>
+#include <winrt/Windows.UI.ViewManagement.h>
 
 #include "VirtualDesktopUtils.h"
 #include "WindowEmperor.h"
 #include "../types/inc/utils.hpp"
+#include "../inc/MaterialHelpers.h"
 
 using namespace winrt::Windows::UI;
 using namespace winrt::Windows::UI::Composition;
@@ -20,12 +22,55 @@ using namespace winrt::Windows::Foundation::Numerics;
 using namespace winrt::Microsoft::Terminal;
 using namespace winrt::Microsoft::Terminal::Settings::Model;
 using namespace ::Microsoft::Console;
+using namespace ::Microsoft::Terminal::MaterialHelpers;
 using namespace std::chrono_literals;
 
 // This magic flag is "documented" at https://msdn.microsoft.com/en-us/library/windows/desktop/ms646301(v=vs.85).aspx
 // "If the high-order bit is 1, the key is down; otherwise, it is up."
 static constexpr short KeyPressed{ gsl::narrow_cast<short>(0x8000) };
 static constexpr auto FrameUpdateInterval = std::chrono::milliseconds(16);
+
+static void tryActivateWindowAfterInitialShow(const HWND window) noexcept
+{
+    const auto foregroundWindow = GetForegroundWindow();
+    if (!foregroundWindow || foregroundWindow == window)
+    {
+        SetForegroundWindow(window);
+        return;
+    }
+
+    // Some launchers synchronously wait for the delegated console process on their
+    // UI thread. In that case, foreground activation can stall while Windows tries
+    // to coordinate with the blocked foreground thread. Skip activation when the
+    // current foreground window is not responding.
+    DWORD_PTR unused = 0;
+    if (SendMessageTimeoutW(foregroundWindow,
+                            WM_NULL,
+                            0,
+                            0,
+                            SMTO_ABORTIFHUNG | SMTO_BLOCK,
+                            250,
+                            &unused) == 0)
+    {
+        return;
+    }
+
+    const auto foregroundThreadId = GetWindowThreadProcessId(foregroundWindow, nullptr);
+    const auto currentThreadId = GetCurrentThreadId();
+    const auto attached = foregroundThreadId != 0 &&
+                          foregroundThreadId != currentThreadId &&
+                          AttachThreadInput(foregroundThreadId, currentThreadId, true);
+    auto detachThread = wil::scope_exit([&]() {
+        if (attached)
+        {
+            LOG_IF_WIN32_BOOL_FALSE(AttachThreadInput(foregroundThreadId, currentThreadId, false));
+        }
+    });
+
+    LOG_IF_WIN32_BOOL_FALSE(BringWindowToTop(window));
+    ShowWindow(window, SW_SHOW);
+    LOG_LAST_ERROR_IF_NULL(SetActiveWindow(window));
+}
 
 winrt::com_ptr<IVirtualDesktopManager> getDesktopManager()
 {
@@ -51,6 +96,9 @@ AppHost::AppHost(WindowEmperor* manager, const winrt::TerminalApp::AppLogic& log
     _HandleCommandlineArgs(args);
 
     // _HandleCommandlineArgs will create a _windowLogic
+    // The tab position can change at runtime. If tabs-in-titlebar is enabled,
+    // keep the non-client titlebar available even when the initial tab position
+    // is Left, Right, or Bottom.
     _useNonClientArea = _windowLogic.GetShowTabsInTitlebar();
 
     if (_useNonClientArea)
@@ -1002,7 +1050,16 @@ void AppHost::_updateTheme()
     const auto colorOpacity = b ? color.A / 255.0 : 0.0;
     const auto brushOpacity = _opacityFromBrush(b);
     const auto opacity = std::min(colorOpacity, brushOpacity);
-    _window->UseMica(windowTheme ? windowTheme.UseMica() : false, opacity);
+    const auto highContrast = winrt::Windows::UI::ViewManagement::AccessibilitySettings{}.HighContrast();
+    const auto resolvedApplicationMaterial = ResolveApplicationBackgroundMaterial(
+        theme,
+        _appLogic.Settings().GlobalSettings().ApplicationBackgroundMaterial());
+    const auto systemBackdropType =
+        (highContrast || !Utils::IsDwmSystemBackdropSupported()) ?
+            DWMSBT_NONE :
+            SystemBackdropForMaterial(resolvedApplicationMaterial);
+    const auto appliedSystemBackdropType = _window->SetSystemBackdrop(systemBackdropType, opacity);
+    _windowLogic.SystemBackdropType(appliedSystemBackdropType);
 
     // This is a hack to make the window borders dark instead of light.
     // It must be done before WM_NCPAINT so that the borders are rendered with
@@ -1289,7 +1346,7 @@ safe_void_coroutine AppHost::_WindowInitializedHandler(const winrt::Windows::Fou
                               nCmdShow == SW_FORCEMINIMIZE;
     if (!noForeground)
     {
-        SetForegroundWindow(_window->GetHandle());
+        tryActivateWindowAfterInitialShow(_window->GetHandle());
     }
 
     // Don't set our state to Initialized until after the call to ShowWindow.

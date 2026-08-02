@@ -48,6 +48,25 @@ namespace Microsoft.Terminal.Settings.Model
     {
         AfterLastTab,
         AfterCurrentTab,
+        AfterLastTabExceptDuplicate,
+    };
+
+    enum TabPosition
+    {
+        Top,
+        Bottom,
+        Left,
+        Right
+    };
+
+    enum BackgroundMaterial
+    {
+        Default,
+        Solid,
+        Mica,
+        MicaAlt,
+        Acrylic,
+        AcrylicDark
     };
 
     enum ConfirmOnClose
@@ -66,12 +85,15 @@ namespace Microsoft.Terminal.Settings.Model
         INHERITABLE_SETTING(Int32, InitialCols);
         INHERITABLE_SETTING(Boolean, AlwaysShowTabs);
         INHERITABLE_SETTING(Boolean, ShowTabsFullscreen);
+        INHERITABLE_SETTING(Boolean, EnableTabDragDrop);
         INHERITABLE_SETTING(NewTabPosition, NewTabPosition);
+        INHERITABLE_SETTING(TabPosition, TabBarPosition);
         INHERITABLE_SETTING(Boolean, ShowTitleInTitlebar);
         INHERITABLE_SETTING(ConfirmOnClose, ConfirmOnClose);
         INHERITABLE_SETTING(String, Language);
         INHERITABLE_SETTING(Microsoft.UI.Xaml.Controls.TabViewWidthMode, TabWidthMode);
         INHERITABLE_SETTING(Boolean, UseAcrylicInTabRow);
+        INHERITABLE_SETTING(BackgroundMaterial, ApplicationBackgroundMaterial);
         INHERITABLE_SETTING(Boolean, ShowTabsInTitlebar);
         INHERITABLE_SETTING(String, WordDelimiters);
         INHERITABLE_SETTING(Boolean, CopyOnSelect);

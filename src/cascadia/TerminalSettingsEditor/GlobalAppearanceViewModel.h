@@ -12,6 +12,10 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     struct GlobalAppearanceViewModel : GlobalAppearanceViewModelT<GlobalAppearanceViewModel>, ViewModelHelper<GlobalAppearanceViewModel>
     {
     public:
+        Windows::Foundation::Collections::IObservableVector<Microsoft::Terminal::Settings::Editor::EnumEntry> ApplicationBackgroundMaterialList();
+        Windows::Foundation::IInspectable CurrentApplicationBackgroundMaterial();
+        void CurrentApplicationBackgroundMaterial(const Windows::Foundation::IInspectable& enumEntry);
+
         GlobalAppearanceViewModel(Model::GlobalAppSettings globalSettings);
 
         // DON'T YOU DARE ADD A `WINRT_CALLBACK(PropertyChanged` TO A CLASS DERIVED FROM ViewModelHelper. Do this instead:
@@ -19,6 +23,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
         WINRT_PROPERTY(Windows::Foundation::Collections::IObservableVector<Model::Theme>, ThemeList, nullptr);
         GETSET_BINDABLE_ENUM_SETTING(NewTabPosition, Model::NewTabPosition, _GlobalSettings.NewTabPosition);
+        GETSET_BINDABLE_ENUM_SETTING(TabPosition, Model::TabPosition, _GlobalSettings.TabBarPosition);
         GETSET_BINDABLE_ENUM_SETTING(TabWidthMode, winrt::Microsoft::UI::Xaml::Controls::TabViewWidthMode, _GlobalSettings.TabWidthMode);
 
     public:
@@ -34,7 +39,6 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(_GlobalSettings, AlwaysShowTabs);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(_GlobalSettings, ShowTabsFullscreen);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(_GlobalSettings, ShowTabsInTitlebar);
-        PERMANENT_OBSERVABLE_PROJECTED_SETTING(_GlobalSettings, UseAcrylicInTabRow);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(_GlobalSettings, ShowTitleInTitlebar);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(_GlobalSettings, AlwaysOnTop);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(_GlobalSettings, AutoHideWindow);
@@ -46,6 +50,8 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     private:
         Model::GlobalAppSettings _GlobalSettings;
         winrt::Windows::Foundation::IInspectable _currentTheme;
+        Windows::Foundation::Collections::IObservableVector<Microsoft::Terminal::Settings::Editor::EnumEntry> _ApplicationBackgroundMaterialList;
+        Windows::Foundation::Collections::IMap<Model::BackgroundMaterial, Microsoft::Terminal::Settings::Editor::EnumEntry> _ApplicationBackgroundMaterialMap;
 
         void _UpdateThemeList();
     };

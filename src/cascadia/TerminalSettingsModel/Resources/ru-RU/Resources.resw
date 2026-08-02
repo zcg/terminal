@@ -453,6 +453,9 @@
   <data name="ToggleAlwaysOnTopCommandKey" xml:space="preserve">
     <value>Режим "поверх других окон"</value>
   </data>
+  <data name="ToggleVerticalTabsCommandKey" xml:space="preserve">
+    <value>Toggle vertical tabs</value>
+  </data>
   <data name="ToggleCommandPaletteCommandKey" xml:space="preserve">
     <value>Показать или скрыть палитру команд</value>
   </data>

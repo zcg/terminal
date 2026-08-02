@@ -151,10 +151,19 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
         WINRT_PROPERTY(bool, IsBaseLayer, false);
         WINRT_PROPERTY(bool, FocusDeleteButton, false);
+
+    public:
+        Model::TerminalBackgroundMaterial TerminalBackgroundMaterial();
+        void TerminalBackgroundMaterial(Model::TerminalBackgroundMaterial value);
+        void ClearTerminalBackgroundMaterial();
+        bool HasTerminalBackgroundMaterial() const;
+        Model::IAppearanceConfig TerminalBackgroundMaterialOverrideSource() const;
+
         GETSET_BINDABLE_ENUM_SETTING(AntiAliasingMode, Microsoft::Terminal::Control::TextAntialiasingMode, AntialiasingMode);
         GETSET_BINDABLE_ENUM_SETTING(CloseOnExitMode, Microsoft::Terminal::Settings::Model::CloseOnExitMode, CloseOnExit);
         GETSET_BINDABLE_ENUM_SETTING(ScrollState, Microsoft::Terminal::Control::ScrollbarState, ScrollState);
         GETSET_BINDABLE_ENUM_SETTING(PathTranslationStyle, Microsoft::Terminal::Control::PathTranslationStyle, PathTranslationStyle);
+        GETSET_BINDABLE_ENUM_SETTING(TerminalBackgroundMaterial, Model::TerminalBackgroundMaterial, TerminalBackgroundMaterial);
 
     private:
         Model::Profile _profile;

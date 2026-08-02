@@ -37,12 +37,14 @@ Author(s):
     X(bool, DetectURLs, "experimental.detectURLs", true)                                                                                                                                              \
     X(bool, AlwaysShowTabs, "alwaysShowTabs", true)                                                                                                                                                   \
     X(Model::NewTabPosition, NewTabPosition, "newTabPosition", Model::NewTabPosition::AfterLastTab)                                                                                                   \
+    X(Model::TabPosition, TabBarPosition, "tabPosition", Model::TabPosition::Top)                                                                                                                \
     X(bool, ShowTitleInTitlebar, "showTerminalTitleInTitlebar", true)                                                                                                                                 \
     X(Model::ConfirmOnClose, ConfirmOnClose, "warning.confirmOnClose", Model::ConfirmOnClose::Automatic)                                                                                              \
     X(Model::ThemePair, Theme, "theme")                                                                                                                                                               \
     X(hstring, Language, "language")                                                                                                                                                                  \
     X(winrt::Microsoft::UI::Xaml::Controls::TabViewWidthMode, TabWidthMode, "tabWidthMode", winrt::Microsoft::UI::Xaml::Controls::TabViewWidthMode::Equal)                                            \
     X(bool, UseAcrylicInTabRow, "useAcrylicInTabRow", false)                                                                                                                                          \
+    X(Model::BackgroundMaterial, ApplicationBackgroundMaterial, "applicationBackgroundMaterial", Model::BackgroundMaterial::Default)                                                                   \
     X(bool, ShowTabsInTitlebar, "showTabsInTitlebar", true)                                                                                                                                           \
     X(bool, InputServiceWarning, "warning.inputService", true)                                                                                                                                        \
     X(winrt::Microsoft::Terminal::Control::CopyFormat, CopyFormatting, "copyFormatting", 0)                                                                                                           \
@@ -72,6 +74,7 @@ Author(s):
     X(winrt::Windows::Foundation::Collections::IVector<Model::NewTabMenuEntry>, NewTabMenu, "newTabMenu", winrt::single_threaded_vector<Model::NewTabMenuEntry>({ Model::RemainingProfilesEntry{} })) \
     X(bool, AllowHeadless, "compatibility.allowHeadless", false)                                                                                                                                      \
     X(hstring, SearchWebDefaultQueryUrl, "searchWebDefaultQueryUrl", L"https://www.bing.com/search?q=%22%s%22")                                                                                       \
+    X(bool, EnableTabDragDrop, "enableTabDragDrop", true)                                                                                                                                             \
     X(bool, ShowTabsFullscreen, "showTabsFullscreen", false)
 
 // Also add these settings to:
@@ -145,7 +148,8 @@ Author(s):
     X(IMediaResource, BackgroundImagePath, "backgroundImage", implementation::MediaResource::Empty())                                                              \
     X(Model::IntenseStyle, IntenseTextStyle, "intenseTextStyle", Model::IntenseStyle::Bright)                                                                      \
     X(Core::AdjustTextMode, AdjustIndistinguishableColors, "adjustIndistinguishableColors", Core::AdjustTextMode::Automatic)                                       \
-    X(bool, UseAcrylic, "useAcrylic", false)
+    X(bool, UseAcrylic, "useAcrylic", false)                                                                                                            \
+    X(Model::TerminalBackgroundMaterial, TerminalBackgroundMaterial, "backgroundMaterial", Model::TerminalBackgroundMaterial::Default)
 
 // Intentionally omitted Appearance settings:
 // * ForegroundKey, BackgroundKey, SelectionBackgroundKey, CursorColorKey: all optional colors

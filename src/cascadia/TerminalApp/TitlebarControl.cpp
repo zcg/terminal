@@ -198,6 +198,12 @@ namespace winrt::TerminalApp::implementation
             return;
         }
 
+        if (c.a == 0)
+        {
+            MinMaxCloseControl().RequestedTheme(ActualTheme());
+            return;
+        }
+
         constexpr auto lightnessThreshold = 0.6f;
         const auto isBrightColor = ColorFix::GetLightness(c) >= lightnessThreshold;
         MinMaxCloseControl().RequestedTheme(isBrightColor ? winrt::Windows::UI::Xaml::ElementTheme::Light :

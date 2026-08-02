@@ -453,6 +453,9 @@
   <data name="ToggleAlwaysOnTopCommandKey" xml:space="preserve">
     <value>Modus "Immer im Vordergrund" umschalten</value>
   </data>
+  <data name="ToggleVerticalTabsCommandKey" xml:space="preserve">
+    <value>Toggle vertical tabs</value>
+  </data>
   <data name="ToggleCommandPaletteCommandKey" xml:space="preserve">
     <value>Befehlspalette ein/aus</value>
   </data>

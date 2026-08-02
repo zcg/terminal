@@ -60,6 +60,7 @@
     ON_ALL_ACTIONS(ToggleFocusMode)         \
     ON_ALL_ACTIONS(ToggleFullscreen)        \
     ON_ALL_ACTIONS(ToggleAlwaysOnTop)       \
+    ON_ALL_ACTIONS(ToggleVerticalTabs)      \
     ON_ALL_ACTIONS(OpenSettings)            \
     ON_ALL_ACTIONS(SetFocusMode)            \
     ON_ALL_ACTIONS(SetFullScreen)           \

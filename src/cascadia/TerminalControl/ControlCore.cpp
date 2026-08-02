@@ -2555,7 +2555,28 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         // then the renderer should not render "default background" text with a
         // fully opaque background. Doing that would cover up our nice
         // transparency, or our acrylic, or our image.
-        return Opacity() < 1.0f || !_settings.BackgroundImage().empty() || _settings.UseBackgroundImageForWindow();
+        return Opacity() < 1.0f || !_settings.BackgroundImage().empty() || _settings.UseBackgroundImageForWindow() || UseWindowBackgroundMaterial();
+    }
+
+    bool ControlCore::UseWindowBackgroundMaterial() const noexcept
+    {
+        return _settings.UseWindowBackgroundMaterial() && _windowBackgroundMaterialAvailable;
+    }
+
+    void ControlCore::WindowBackgroundMaterialAvailable(const bool available)
+    {
+        if (_windowBackgroundMaterialAvailable == available)
+        {
+            return;
+        }
+
+        _windowBackgroundMaterialAvailable = available;
+        if (_renderEngine)
+        {
+            const auto lock = _terminal->LockForWriting();
+            _renderEngine->EnableTransparentBackground(_isBackgroundTransparent());
+            _renderer->TriggerRedrawAll(true, true);
+        }
     }
 
     uint64_t ControlCore::OwningHwnd()

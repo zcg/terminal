@@ -126,6 +126,7 @@ namespace SettingsModelUnitTests
                 "tabSwitcherMode": "mru",
 
                 "theme": "system",
+                "applicationBackgroundMaterial": "acrylicDark",
                 "snapToGridOnResize": true,
                 "disableAnimations": false,
 
@@ -188,6 +189,7 @@ namespace SettingsModelUnitTests
                 "selectionBackground": "#CCAABB",
 
                 "useAcrylic": false,
+                "backgroundMaterial": "useWindowMaterial",
                 "opacity": 50,
 
                 "backgroundImage": "made_you_look.jpeg",

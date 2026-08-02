@@ -439,6 +439,9 @@
   <data name="NewTabSplitButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>New Tab</value>
   </data>
+  <data name="TabNewButtonText" xml:space="preserve">
+    <value>New tab</value>
+  </data>
   <data name="NewTabRun.Text" xml:space="preserve">
     <value>Open a new tab</value>
   </data>
@@ -996,6 +999,12 @@
   </data>
   <data name="TabMoveRight" xml:space="preserve">
     <value>Move right</value>
+  </data>
+  <data name="TabMoveUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="TabMoveDown" xml:space="preserve">
+    <value>Move down</value>
   </data>
   <data name="InvalidRegex" xml:space="preserve">
     <value>An invalid regular expression was found.</value>

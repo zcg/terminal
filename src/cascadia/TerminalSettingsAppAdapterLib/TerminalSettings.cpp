@@ -5,10 +5,12 @@
 #include "TerminalSettings.h"
 #include "winrt/Windows.UI.ViewManagement.h"
 #include "../../types/inc/colorTable.hpp"
+#include "../inc/MaterialHelpers.h"
 
 using namespace winrt::Microsoft::Terminal::Control;
 using namespace winrt::Microsoft::Terminal::Settings;
 using namespace Microsoft::Console::Utils;
+using namespace Microsoft::Terminal::MaterialHelpers;
 
 namespace winrt::Microsoft::Terminal::Settings
 {
@@ -66,6 +68,7 @@ namespace winrt::Microsoft::Terminal::Settings
     {
         const auto settings = _CreateWithProfileCommon(appSettings, profile);
         settings->_UseBackgroundImageForWindow = false;
+        settings->_UseWindowBackgroundMaterial = false;
         return settings;
     }
 
@@ -273,7 +276,25 @@ namespace winrt::Microsoft::Terminal::Settings
 
         _AdjustIndistinguishableColors = appearance.AdjustIndistinguishableColors();
         _Opacity = appearance.Opacity();
-        _UseAcrylic = appearance.UseAcrylic();
+        _UseWindowBackgroundMaterial = false;
+
+        switch (ResolveTerminalBackgroundMaterial(appearance))
+        {
+        case Model::TerminalBackgroundMaterial::Solid:
+            _UseAcrylic = false;
+            break;
+        case Model::TerminalBackgroundMaterial::Acrylic:
+            _UseAcrylic = true;
+            break;
+        case Model::TerminalBackgroundMaterial::UseWindowMaterial:
+            _UseAcrylic = false;
+            _UseWindowBackgroundMaterial = true;
+            break;
+        case Model::TerminalBackgroundMaterial::Default:
+        default:
+            _UseAcrylic = appearance.UseAcrylic();
+            break;
+        }
     }
 
     // Method Description:

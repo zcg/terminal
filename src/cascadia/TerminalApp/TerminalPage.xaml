@@ -25,7 +25,36 @@
                              Grid.Row="0"
                              KeyUp="_KeyDownHandler" />
 
-        <StackPanel Grid.Row="1"
+        <!--  Vertical TabView for Left/Right mode  -->
+        <mux:TabView x:Name="TabViewVertical"
+                     Grid.Row="0"
+                     Style="{StaticResource VerticalTabViewStyle}"
+                     Visibility="Collapsed"
+                     VerticalAlignment="Stretch"
+                     HorizontalAlignment="Stretch"
+                     IsTabStop="False"
+                     IsAddTabButtonVisible="False">
+            <mux:TabView.TabStripFooter>
+                <Grid Height="36">
+                    <mux:SplitButton x:Name="VerticalNewTabButton"
+                                     x:Uid="NewTabSplitButton"
+                                     Height="28"
+                                     Margin="4,4,4,8"
+                                     Padding="0"
+                                     HorizontalAlignment="Stretch"
+                                     VerticalAlignment="Stretch"
+                                     BorderThickness="1"
+                                     Content="&#xE710;"
+                                     FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                     FontSize="12" />
+                </Grid>
+            </mux:TabView.TabStripFooter>
+        </mux:TabView>
+
+
+
+        <StackPanel x:Name="InfoBarPanel"
+                    Grid.Row="1"
                     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
             <mux:InfoBar x:Name="KeyboardServiceWarningInfoBar"
                          x:Load="False"
@@ -56,14 +85,17 @@
             </mux:InfoBar>
         </StackPanel>
 
-        <Grid x:Name="TabContent"
+        <Grid x:Name="ContentRoot"
               Grid.Row="2"
               HorizontalAlignment="Stretch"
               VerticalAlignment="Stretch">
-            <Grid.Background>
-                <ImageBrush />
-            </Grid.Background>
-        </Grid>
+            <Grid x:Name="TabContent"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+                <Grid.Background>
+                    <ImageBrush />
+                </Grid.Background>
+            </Grid>
 
         <!--
             GH#12775 et. al: After switching to ControlsV2, it seems that
@@ -82,93 +114,85 @@
             just this weird hole that appeared in Row 0.
         -->
 
-        <local:AboutDialog x:Name="AboutDialog"
-                           Grid.Row="2"
-                           x:Load="False" />
+            <local:AboutDialog x:Name="AboutDialog"
+                               x:Load="False" />
 
-        <ContentDialog x:Name="ConfirmCloseDialog"
-                       Grid.Row="2"
-                       x:Load="False"
-                       DefaultButton="Primary">
-            <CheckBox x:Uid="DontAskAgainCheckBox" />
-        </ContentDialog>
+            <ContentDialog x:Name="ConfirmCloseDialog"
+                           x:Load="False"
+                           DefaultButton="Primary">
+                <CheckBox x:Uid="DontAskAgainCheckBox" />
+            </ContentDialog>
 
-        <ContentDialog x:Name="CloseReadOnlyDialog"
-                       x:Uid="CloseReadOnlyDialog"
-                       Grid.Row="2"
-                       x:Load="False"
-                       DefaultButton="Close" />
+            <ContentDialog x:Name="CloseReadOnlyDialog"
+                           x:Uid="CloseReadOnlyDialog"
+                           x:Load="False"
+                           DefaultButton="Close" />
 
-        <ContentDialog x:Name="MultiLinePasteDialog"
-                       x:Uid="MultiLinePasteDialog"
-                       Grid.Row="2"
-                       x:Load="False"
-                       DefaultButton="Primary">
-            <StackPanel>
-                <TextBlock x:Uid="MultiLineWarningText"
-                           TextWrapping="Wrap" />
-                <TextBlock x:Uid="ClipboardTextHeader"
-                           Margin="0,16,0,0" />
-                <ScrollViewer x:Name="ClipboardContentScrollViewer"
-                              MaxHeight="100"
-                              Margin="0,8,0,0">
-                    <TextBlock x:Name="ClipboardText"
-                               FontFamily="Cascadia Mono"
+            <ContentDialog x:Name="MultiLinePasteDialog"
+                           x:Uid="MultiLinePasteDialog"
+                           x:Load="False"
+                           DefaultButton="Primary">
+                <StackPanel>
+                    <TextBlock x:Uid="MultiLineWarningText"
                                TextWrapping="Wrap" />
-                </ScrollViewer>
-            </StackPanel>
-        </ContentDialog>
+                    <TextBlock x:Uid="ClipboardTextHeader"
+                               Margin="0,16,0,0" />
+                    <ScrollViewer x:Name="ClipboardContentScrollViewer"
+                                  MaxHeight="100"
+                                  Margin="0,8,0,0">
+                        <TextBlock x:Name="ClipboardText"
+                                   FontFamily="Cascadia Mono"
+                                   TextWrapping="Wrap" />
+                    </ScrollViewer>
+                </StackPanel>
+            </ContentDialog>
 
-        <ContentDialog x:Name="LargePasteDialog"
-                       x:Uid="LargePasteDialog"
-                       Grid.Row="2"
-                       x:Load="False"
-                       DefaultButton="Primary" />
+            <ContentDialog x:Name="LargePasteDialog"
+                           x:Uid="LargePasteDialog"
+                           x:Load="False"
+                           DefaultButton="Primary" />
 
-        <ContentDialog x:Name="ControlNoticeDialog"
-                       x:Uid="ControlNoticeDialog"
-                       Grid.Row="2"
-                       x:Load="False"
-                       DefaultButton="Primary">
-            <TextBlock IsTextSelectionEnabled="True"
-                       TextWrapping="WrapWholeWords">
-                <TextBlock.ContextFlyout>
-                    <mtu:TextMenuFlyout />
-                </TextBlock.ContextFlyout>
-                <Run x:Name="NoticeMessage" />
-            </TextBlock>
-        </ContentDialog>
+            <ContentDialog x:Name="ControlNoticeDialog"
+                           x:Uid="ControlNoticeDialog"
+                           x:Load="False"
+                           DefaultButton="Primary">
+                <TextBlock IsTextSelectionEnabled="True"
+                           TextWrapping="WrapWholeWords">
+                    <TextBlock.ContextFlyout>
+                        <mtu:TextMenuFlyout />
+                    </TextBlock.ContextFlyout>
+                    <Run x:Name="NoticeMessage" />
+                </TextBlock>
+            </ContentDialog>
 
-        <ContentDialog x:Name="UriErrorDialog"
-                       x:Uid="UriErrorDialog"
-                       Grid.Row="2"
-                       x:Load="False"
-                       DefaultButton="Close">
-            <TextBlock IsTextSelectionEnabled="True"
-                       TextWrapping="WrapWholeWords">
-                <TextBlock.ContextFlyout>
-                    <mtu:TextMenuFlyout />
-                </TextBlock.ContextFlyout>
-                <Run x:Name="CouldNotOpenUriReason" /> <LineBreak /> <LineBreak />
-                <Run x:Name="UnopenedUri"
-                     FontFamily="Cascadia Mono" />
-            </TextBlock>
-        </ContentDialog>
+            <ContentDialog x:Name="UriErrorDialog"
+                           x:Uid="UriErrorDialog"
+                           x:Load="False"
+                           DefaultButton="Close">
+                <TextBlock IsTextSelectionEnabled="True"
+                           TextWrapping="WrapWholeWords">
+                    <TextBlock.ContextFlyout>
+                        <mtu:TextMenuFlyout />
+                    </TextBlock.ContextFlyout>
+                    <Run x:Name="CouldNotOpenUriReason" /> <LineBreak /> <LineBreak />
+                    <Run x:Name="UnopenedUri"
+                         FontFamily="Cascadia Mono" />
+                </TextBlock>
+            </ContentDialog>
 
-        <local:CommandPalette x:Name="CommandPaletteElement"
-                              Grid.Row="2"
-                              VerticalAlignment="Stretch"
-                              x:Load="False"
-                              PreviewKeyDown="_KeyDownHandler"
-                              Visibility="Collapsed" />
-
-        <local:SuggestionsControl x:Name="SuggestionsElement"
-                                  Grid.Row="2"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Top"
+            <local:CommandPalette x:Name="CommandPaletteElement"
+                                  VerticalAlignment="Stretch"
                                   x:Load="False"
                                   PreviewKeyDown="_KeyDownHandler"
                                   Visibility="Collapsed" />
+
+            <local:SuggestionsControl x:Name="SuggestionsElement"
+                                      HorizontalAlignment="Left"
+                                      VerticalAlignment="Top"
+                                      x:Load="False"
+                                      PreviewKeyDown="_KeyDownHandler"
+                                      Visibility="Collapsed" />
+        </Grid>
 
         <!--
             A TeachingTip with IsLightDismissEnabled="True" will immediately

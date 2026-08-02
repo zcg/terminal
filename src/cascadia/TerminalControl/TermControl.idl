@@ -151,6 +151,7 @@ namespace Microsoft.Terminal.Control
         // not overriding or changing _that_ value. Callers that want the
         // opacity set by the settings should call this instead.
         Single BackgroundOpacity { get; };
+        void WindowBackgroundMaterialAvailable(Boolean available);
 
         CursorDisplayState CursorVisibility;
 

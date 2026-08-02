@@ -453,6 +453,9 @@
   <data name="ToggleAlwaysOnTopCommandKey" xml:space="preserve">
     <value>Увімкнути режим "Завжди зверху".</value>
   </data>
+  <data name="ToggleVerticalTabsCommandKey" xml:space="preserve">
+    <value>Toggle vertical tabs</value>
+  </data>
   <data name="ToggleCommandPaletteCommandKey" xml:space="preserve">
     <value>Увімкнути палітру команд</value>
   </data>

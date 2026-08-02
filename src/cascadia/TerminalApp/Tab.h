@@ -36,6 +36,8 @@ namespace winrt::TerminalApp::implementation
         void AttachPane(std::shared_ptr<Pane> pane);
 
         void AttachColorPicker(winrt::TerminalApp::ColorPickupFlyout& colorPicker);
+        winrt::TerminalApp::TabHeaderControl GetHeaderControlVertical() const { return _headerControlVertical; }
+        void SetVerticalTabActive(const bool active) noexcept { _isVerticalTabActive = active; }
 
         std::pair<std::shared_ptr<Pane>, std::shared_ptr<Pane>> SplitPane(winrt::Microsoft::Terminal::Settings::Model::SplitDirection splitType,
                                                                           const float splitSize,
@@ -133,6 +135,7 @@ namespace winrt::TerminalApp::implementation
         WINRT_OBSERVABLE_PROPERTY(winrt::hstring, Icon, PropertyChanged.raise);
         WINRT_OBSERVABLE_PROPERTY(bool, ReadOnly, PropertyChanged.raise, false);
         WINRT_PROPERTY(winrt::Microsoft::UI::Xaml::Controls::TabViewItem, TabViewItem, nullptr);
+        WINRT_PROPERTY(winrt::Microsoft::UI::Xaml::Controls::TabViewItem, TabViewItemVertical, nullptr);
 
         WINRT_OBSERVABLE_PROPERTY(winrt::Windows::UI::Xaml::FrameworkElement, Content, PropertyChanged.raise, nullptr);
 
@@ -170,7 +173,9 @@ namespace winrt::TerminalApp::implementation
         winrt::hstring _lastIconPath{};
         std::optional<winrt::Windows::UI::Color> _runtimeTabColor{};
         winrt::TerminalApp::TabHeaderControl _headerControl{};
+        winrt::TerminalApp::TabHeaderControl _headerControlVertical{};
         winrt::TerminalApp::TerminalTabStatus _tabStatus{};
+        bool _isVerticalTabActive{ false };
 
         winrt::TerminalApp::ColorPickupFlyout _tabColorPickup{ nullptr };
         winrt::event_token _colorSelectedToken;
@@ -241,6 +246,7 @@ namespace winrt::TerminalApp::implementation
         void _MakeTabViewItem();
 
         void _AppendMoveMenuItems(winrt::Windows::UI::Xaml::Controls::MenuFlyout flyout);
+        void _UpdateMoveMenuItemLabels();
         winrt::Windows::UI::Xaml::Controls::MenuFlyoutSubItem _AppendCloseMenuItems(winrt::Windows::UI::Xaml::Controls::MenuFlyout flyout);
         void _EnableMenuItems();
         void _UpdateSwitchToTabKeyChord();

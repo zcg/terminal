@@ -188,6 +188,9 @@
                             <SolidColorBrush x:Key="TabViewBackground"
                                              Color="#2e2e2e" />
 
+                            <SolidColorBrush x:Key="TabViewItemHeaderForeground"
+                                             Color="#99FFFFFF" />
+
                             <StaticResource x:Key="UnfocusedBorderBrush"
                                             ResourceKey="TabViewBackground" />
 
@@ -206,6 +209,9 @@
                             -->
                             <SolidColorBrush x:Key="TabViewBackground"
                                              Color="#e8e8e8" />
+
+                            <SolidColorBrush x:Key="TabViewItemHeaderForeground"
+                                             Color="#99000000" />
 
                             <StaticResource x:Key="UnfocusedBorderBrush"
                                             ResourceKey="TabViewBackground" />
@@ -245,6 +251,7 @@
                 </ResourceDictionary>
 
                 <ResourceDictionary Source="ms-resource:///Files/TerminalApp/HighlightedTextControlStyle.xaml" />
+                <ResourceDictionary Source="ms-resource:///Files/TerminalApp/VerticalTabViewStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
 

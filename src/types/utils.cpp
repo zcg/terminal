@@ -1295,6 +1295,20 @@ bool Utils::IsWindows11() noexcept
     return isWindows11;
 }
 
+bool Utils::IsDwmSystemBackdropSupported() noexcept
+{
+    static const bool isSupported = []() noexcept {
+        OSVERSIONINFOEXW osver{};
+        osver.dwOSVersionInfoSize = sizeof(osver);
+        osver.dwBuildNumber = 22621;
+
+        DWORDLONG conditionMask = 0;
+        VER_SET_CONDITION(conditionMask, VER_BUILDNUMBER, VER_GREATER_EQUAL);
+        return VerifyVersionInfoW(&osver, VER_BUILDNUMBER, conditionMask) != FALSE;
+    }();
+    return isSupported;
+}
+
 bool Utils::IsLikelyToBeEmojiOrSymbolIcon(std::wstring_view text) noexcept
 {
     if (text.size() == 1 && !IS_HIGH_SURROGATE(til::at(text, 0)))

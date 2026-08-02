@@ -280,6 +280,34 @@
     <value>After the current tab</value>
     <comment>An option to choose from for the "Position of newly created tabs" setting. When selected new tab appears after the current tab.</comment>
   </data>
+  <data name="Globals_NewTabPositionAfterLastTabExceptDuplicate.Content" xml:space="preserve">
+    <value>After the last tab, except duplicates</value>
+    <comment>An option to choose from for the "Position of newly created tabs" setting. When selected new tabs appear after the last tab, but duplicated tabs appear after the original tab.</comment>
+  </data>
+  <data name="Globals_TabPosition.Header" xml:space="preserve">
+    <value>Tab bar position</value>
+    <comment>Header for a control to select where the tab strip is shown.</comment>
+  </data>
+  <data name="Globals_TabPosition.HelpText" xml:space="preserve">
+    <value>Controls where the tab strip is shown: top, bottom, left, or right side of the window.</value>
+    <comment>A description for what the "tab bar position" setting does.</comment>
+  </data>
+  <data name="Globals_TabPositionTop.Content" xml:space="preserve">
+    <value>Top</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
+  <data name="Globals_TabPositionBottom.Content" xml:space="preserve">
+    <value>Bottom</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
+  <data name="Globals_TabPositionLeft.Content" xml:space="preserve">
+    <value>Left (vertical)</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
+  <data name="Globals_TabPositionRight.Content" xml:space="preserve">
+    <value>Right (vertical)</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
   <data name="Globals_CopyOnSelect.Header" xml:space="preserve">
     <value>Automatically copy selection to clipboard</value>
     <comment>Header for a control to toggle whether selected text should be copied to the clipboard automatically, or not.</comment>
@@ -513,9 +541,37 @@
     <value>When disabled, the title bar will appear above the tabs.</value>
     <comment>A description for what the "show titlebar" setting does. Presented near "Globals_ShowTitlebar.Header".</comment>
   </data>
-  <data name="Globals_AcrylicTabRow.Header" xml:space="preserve">
-    <value>Use acrylic material in the tab row</value>
-    <comment>Header for a control to toggle whether "acrylic material" is used. "Acrylic material" is a Microsoft-specific term: https://docs.microsoft.com/en-us/windows/apps/design/style/acrylic</comment>
+  <data name="Globals_ApplicationBackgroundMaterial.Header" xml:space="preserve">
+    <value>Application background material</value>
+    <comment>Header for a control to choose the background material used by the application window.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterial.HelpText" xml:space="preserve">
+    <value>Choose the material used by the application window, tab row, and settings UI. This does not change the terminal content area; set a profile's terminal background material to "Use window material" if you want content to share the window backdrop.</value>
+    <comment>A description for what the "application background material" setting does. Presented near "Globals_ApplicationBackgroundMaterial.Header".</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialDefault.Content" xml:space="preserve">
+    <value>Default</value>
+    <comment>An option to choose from for the "application background material" setting. When selected, the application uses the active theme's default behavior.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialSolid.Content" xml:space="preserve">
+    <value>Solid</value>
+    <comment>An option to choose from for the "application background material" setting. When selected, the application uses an opaque solid background.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialMica.Content" xml:space="preserve">
+    <value>Mica</value>
+    <comment>An option to choose from for the "application background material" setting. "Mica" is a Microsoft-specific material name.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialMicaAlt.Content" xml:space="preserve">
+    <value>Mica Alt</value>
+    <comment>An option to choose from for the "application background material" setting. "Mica Alt" is a Microsoft-specific material name.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialAcrylic.Content" xml:space="preserve">
+    <value>Acrylic</value>
+    <comment>An option to choose from for the "application background material" setting. "Acrylic" is a Microsoft-specific material name.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialAcrylicDark.Content" xml:space="preserve">
+    <value>Acrylic (dark)</value>
+    <comment>An option to choose from for the "application background material" setting. "Acrylic" is a Microsoft-specific material name.</comment>
   </data>
   <data name="Globals_ShowTitleInTitlebar.Header" xml:space="preserve">
     <value>Use active terminal title as application title</value>
@@ -524,6 +580,18 @@
   <data name="Globals_ShowTitleInTitlebar.HelpText" xml:space="preserve">
     <value>When disabled, the title bar will be 'Terminal'.</value>
     <comment>A description for what the "show title in titlebar" setting does. Presented near "Globals_ShowTitleInTitlebar.Header".{Locked="Windows"}</comment>
+  </data>
+  <data name="Globals_EnableTabDragDrop.Header" xml:space="preserve">
+    <value>Reorder and tear out tabs by dragging</value>
+    <comment>Header for a control to toggle whether tabs can be dragged to reorder them or tear them out into a new window.</comment>
+  </data>
+  <data name="Globals_EnableTabDragDrop.HelpText" xml:space="preserve">
+    <value>When disabled, tabs can still be moved with the "move tab" actions.</value>
+    <comment>A description for what the "reorder and tear out tabs by dragging" setting does. Presented near "Globals_EnableTabDragDrop.Header".</comment>
+  </data>
+  <data name="Globals_EnableTabDragDrop_Unavailable" xml:space="preserve">
+    <value>Dragging tabs is unavailable because Terminal is running as administrator or as a different user, where it would crash the window. Use the "move tab" actions instead.</value>
+    <comment>Shown in place of the help text when the "reorder and tear out tabs by dragging" setting is disabled because the operating system would not allow tab dragging in this session.</comment>
   </data>
   <data name="Globals_SnapToGridOnResize.Header" xml:space="preserve">
     <value>Snap window resizing to character grid</value>
@@ -1276,6 +1344,30 @@
   <data name="Profile_UseAcrylic.HelpText" xml:space="preserve">
     <value>Applies a translucent texture to the background of the window.</value>
     <comment>A description for what the "Profile_UseAcrylic" setting does.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterial.Header" xml:space="preserve">
+    <value>Terminal background material</value>
+    <comment>Header for a control to choose the background material used by a terminal profile.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterial.HelpText" xml:space="preserve">
+    <value>Choose the material used by this profile's terminal background.</value>
+    <comment>A description for what the "Profile_TerminalBackgroundMaterial" setting does.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterialDefault.Content" xml:space="preserve">
+    <value>Default</value>
+    <comment>An option to choose from for the "terminal background material" setting. When selected, the profile uses a normal solid/opaque terminal background (respecting opacity and useAcrylic).</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterialSolid.Content" xml:space="preserve">
+    <value>Solid</value>
+    <comment>An option to choose from for the "terminal background material" setting. When selected, the profile uses a solid background.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterialAcrylic.Content" xml:space="preserve">
+    <value>Acrylic</value>
+    <comment>An option to choose from for the "terminal background material" setting. "Acrylic" is a Microsoft-specific material name.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterialUseWindowMaterial.Content" xml:space="preserve">
+    <value>Use window material</value>
+    <comment>An option to choose from for the "terminal background material" setting. When selected, the profile uses the application window's background material.</comment>
   </data>
   <data name="Profile_UseDesktopImage.Content" xml:space="preserve">
     <value>Use desktop wallpaper</value>

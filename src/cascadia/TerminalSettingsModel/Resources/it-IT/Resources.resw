@@ -453,6 +453,9 @@
   <data name="ToggleAlwaysOnTopCommandKey" xml:space="preserve">
     <value>Modalità attiva/disattiva sempre in alto</value>
   </data>
+  <data name="ToggleVerticalTabsCommandKey" xml:space="preserve">
+    <value>Toggle vertical tabs</value>
+  </data>
   <data name="ToggleCommandPaletteCommandKey" xml:space="preserve">
     <value>Attiva/disattiva riquadro dei comandi</value>
   </data>

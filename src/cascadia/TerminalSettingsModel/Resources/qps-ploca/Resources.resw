@@ -453,6 +453,9 @@
   <data name="ToggleAlwaysOnTopCommandKey" xml:space="preserve">
     <value>Ŧōĝġļě αŀώªÿŝ òⁿ тοр мöðέ !!! !!! !</value>
   </data>
+  <data name="ToggleVerticalTabsCommandKey" xml:space="preserve">
+    <value>Toggle vertical tabs</value>
+  </data>
   <data name="ToggleCommandPaletteCommandKey" xml:space="preserve">
     <value>Ţōĝğļė čσmmάήđ рåŀęŧŧз !!! !!! </value>
   </data>

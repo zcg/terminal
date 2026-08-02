@@ -17,6 +17,14 @@ namespace winrt::TerminalApp::implementation
     {
         _sui = winrt::Microsoft::Terminal::Settings::Editor::MainPage{ settings };
 
+        // Forward the settings-saved event from MainPage to our callback.
+        _settingsSavedRevoker = _sui.SettingsSaved(winrt::auto_revoke, [this](auto&&, auto&& args) {
+            if (OnSettingsSaved)
+            {
+                OnSettingsSaved(args);
+            }
+        });
+
         // Stash away the current requested theme of the app. We'll need that in
         // _BackgroundBrush() to do a theme-aware resource lookup
         _requestedTheme = settings.GlobalSettings().CurrentTheme().RequestedTheme();

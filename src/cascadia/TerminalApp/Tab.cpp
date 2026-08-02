@@ -110,6 +110,22 @@ namespace winrt::TerminalApp::implementation
 
         // Use our header control as the TabViewItem's header
         TabViewItem().Header(_headerControl);
+
+        // Set up the vertical TabViewItem's header control with same handlers
+        _headerControlVertical.TabStatus(_tabStatus);
+        _headerControlVertical.TitleChangeRequested([weakThis = get_weak()](auto&& title) {
+            if (auto tab{ weakThis.get() })
+            {
+                tab->SetTabText(title);
+            }
+        });
+        _headerControlVertical.RenameEnded([weakThis = get_weak()](auto&&, auto&&) {
+            if (auto tab{ weakThis.get() })
+            {
+                tab->RequestFocusActiveControl.raise();
+            }
+        });
+        _headerControlVertical.MaxWidth(_headerControl.MaxWidth());
     }
 
     // Method Description:
@@ -132,6 +148,61 @@ namespace winrt::TerminalApp::implementation
     void Tab::_MakeTabViewItem()
     {
         TabViewItem(::winrt::MUX::Controls::TabViewItem{});
+
+        TabViewItemVertical(::winrt::MUX::Controls::TabViewItem{});
+        try
+        {
+            const auto resources = Application::Current().Resources();
+            const auto styleKey = winrt::box_value(L"VerticalTabViewItemStyle");
+            if (resources.HasKey(styleKey))
+            {
+                if (const auto style = resources.Lookup(styleKey).try_as<WUX::Style>())
+                {
+                    TabViewItemVertical().Style(style);
+                }
+            }
+        }
+        CATCH_LOG();
+
+        // Same event handlers as TabViewItem (Tapped, Content, DoubleTapped, GettingFocus)
+        TabViewItemVertical().Tapped([weakThis{ get_weak() }](auto&&, auto&&) {
+            if (auto tab{ weakThis.get() })
+            {
+                tab->RequestFocusActiveControl.raise();
+            }
+        });
+
+        TabViewItemVertical().Content(winrt::WUX::Controls::Border{});
+
+        TabViewItemVertical().DoubleTapped([weakThis = get_weak()](auto&&, auto&&) {
+            if (auto tab{ weakThis.get() })
+            {
+                tab->ActivateTabRenamer();
+            }
+        });
+
+        TabViewItemVertical().GettingFocus([](auto&&, const winrt::WUX::Input::GettingFocusEventArgs& args) {
+            const auto direction{ args.Direction() };
+            if (direction != winrt::WUX::Input::FocusNavigationDirection::Up &&
+                direction != winrt::WUX::Input::FocusNavigationDirection::Down)
+            {
+                return;
+            }
+            if (args.InputDevice() != winrt::WUX::Input::FocusInputDeviceKind::GameController)
+            {
+                return;
+            }
+            if (args.OldFocusedElement().try_as<winrt::MUX::Controls::TabViewItem>() &&
+                args.NewFocusedElement().try_as<winrt::MUX::Controls::TabViewItem>())
+            {
+                args.Cancel(true);
+                args.Handled(true);
+            }
+        });
+
+        // Use _headerControlVertical as the vertical TabViewItem's header.
+        // This gives it the full rename, icon, and progress support.
+        TabViewItemVertical().Header(_headerControlVertical);
 
         // GH#3609 If the tab was tapped, and no one else was around to handle
         // it, then ask our parent to toss focus into the active control.
@@ -210,10 +281,12 @@ namespace winrt::TerminalApp::implementation
             if (settings.GlobalSettings().TabWidthMode() == winrt::Microsoft::UI::Xaml::Controls::TabViewWidthMode::SizeToContent)
             {
                 _headerControl.RenamerMaxWidth(HeaderRenameBoxWidthTitleLength);
+                _headerControlVertical.RenamerMaxWidth(HeaderRenameBoxWidthTitleLength);
             }
             else
             {
                 _headerControl.RenamerMaxWidth(HeaderRenameBoxWidthDefault);
+                _headerControlVertical.RenamerMaxWidth(HeaderRenameBoxWidthDefault);
             }
         }
         CATCH_LOG()
@@ -264,26 +337,34 @@ namespace winrt::TerminalApp::implementation
     // - <none>
     void Tab::_UpdateToolTip()
     {
-        auto titleRun = WUX::Documents::Run();
-        titleRun.Text(_CreateToolTipTitle());
+        const auto title = _CreateToolTipTitle();
+        const auto keyChord = _keyChord;
 
-        auto textBlock = WUX::Controls::TextBlock{};
-        textBlock.TextWrapping(WUX::TextWrapping::Wrap);
-        textBlock.TextAlignment(WUX::TextAlignment::Center);
-        textBlock.Inlines().Append(titleRun);
+        const auto makeToolTip = [&]() {
+            auto titleRun = WUX::Documents::Run();
+            titleRun.Text(title);
 
-        if (!_keyChord.empty())
-        {
-            auto keyChordRun = WUX::Documents::Run();
-            keyChordRun.Text(_keyChord);
-            keyChordRun.FontStyle(winrt::Windows::UI::Text::FontStyle::Italic);
-            textBlock.Inlines().Append(WUX::Documents::LineBreak{});
-            textBlock.Inlines().Append(keyChordRun);
-        }
+            auto textBlock = WUX::Controls::TextBlock{};
+            textBlock.TextWrapping(WUX::TextWrapping::Wrap);
+            textBlock.TextAlignment(WUX::TextAlignment::Center);
+            textBlock.Inlines().Append(titleRun);
 
-        WUX::Controls::ToolTip toolTip{};
-        toolTip.Content(textBlock);
-        WUX::Controls::ToolTipService::SetToolTip(TabViewItem(), toolTip);
+            if (!keyChord.empty())
+            {
+                auto keyChordRun = WUX::Documents::Run();
+                keyChordRun.Text(keyChord);
+                keyChordRun.FontStyle(winrt::Windows::UI::Text::FontStyle::Italic);
+                textBlock.Inlines().Append(WUX::Documents::LineBreak{});
+                textBlock.Inlines().Append(keyChordRun);
+            }
+
+            WUX::Controls::ToolTip toolTip{};
+            toolTip.Content(textBlock);
+            return toolTip;
+        };
+
+        WUX::Controls::ToolTipService::SetToolTip(TabViewItem(), makeToolTip());
+        WUX::Controls::ToolTipService::SetToolTip(TabViewItemVertical(), makeToolTip());
     }
 
     // Method Description:
@@ -429,16 +510,16 @@ namespace winrt::TerminalApp::implementation
 
         if (iconStyle == IconStyle::Hidden)
         {
-            // The TabViewItem Icon needs MUX while the IconSourceElement in the CommandPalette needs WUX...
-            Icon({});
             TabViewItem().IconSource(IconSource{ nullptr });
+            TabViewItemVertical().IconSource(IconSource{ nullptr });
         }
         else
         {
-            Icon(_lastIconPath);
             bool isMonochrome = iconStyle == IconStyle::Monochrome;
             TabViewItem().IconSource(Microsoft::Terminal::UI::IconPathConverter::IconSourceMUX(_lastIconPath, isMonochrome));
+            TabViewItemVertical().IconSource(Microsoft::Terminal::UI::IconPathConverter::IconSourceMUX(_lastIconPath, isMonochrome));
         }
+        _lastIconStyle = iconStyle;
     }
 
     // Method Description:
@@ -456,11 +537,14 @@ namespace winrt::TerminalApp::implementation
             {
                 Icon({});
                 TabViewItem().IconSource(IconSource{ nullptr });
+                TabViewItemVertical().IconSource(IconSource{ nullptr });
             }
             else
             {
                 Icon(_lastIconPath);
-                TabViewItem().IconSource(Microsoft::Terminal::UI::IconPathConverter::IconSourceMUX(_lastIconPath, _lastIconStyle == IconStyle::Monochrome));
+                const auto isMonochrome = _lastIconStyle == IconStyle::Monochrome;
+                TabViewItem().IconSource(Microsoft::Terminal::UI::IconPathConverter::IconSourceMUX(_lastIconPath, isMonochrome));
+                TabViewItemVertical().IconSource(Microsoft::Terminal::UI::IconPathConverter::IconSourceMUX(_lastIconPath, isMonochrome));
             }
             _iconHidden = hide;
         }
@@ -530,9 +614,10 @@ namespace winrt::TerminalApp::implementation
         // Bubble our current tab text to anyone who's listening for changes.
         Title(activeTitle);
 
-        // Update the control to reflect the changed title
         _headerControl.Title(activeTitle);
+        _headerControlVertical.Title(activeTitle);
         Automation::AutomationProperties::SetName(TabViewItem(), activeTitle);
+        Automation::AutomationProperties::SetName(TabViewItemVertical(), activeTitle);
         _UpdateToolTip();
     }
 
@@ -848,7 +933,14 @@ namespace winrt::TerminalApp::implementation
             }
         });
 
-        _tabColorPickup.ShowAt(TabViewItem());
+        if (_isVerticalTabActive)
+        {
+            _tabColorPickup.ShowAt(TabViewItemVertical());
+        }
+        else
+        {
+            _tabColorPickup.ShowAt(TabViewItem());
+        }
     }
 
     // Method Description:
@@ -1038,7 +1130,14 @@ namespace winrt::TerminalApp::implementation
     {
         ASSERT_UI_THREAD();
 
-        _headerControl.BeginRename();
+        if (_isVerticalTabActive)
+        {
+            _headerControlVertical.BeginRename();
+        }
+        else
+        {
+            _headerControl.BeginRename();
+        }
     }
 
     // Method Description:
@@ -1572,7 +1671,6 @@ namespace winrt::TerminalApp::implementation
                     tab->_dispatch.DoAction(*tab, actionAndArgs);
                 }
             });
-            _moveLeftMenuItem.Text(RS_(L"TabMoveLeft"));
         }
 
         // Move right
@@ -1585,7 +1683,6 @@ namespace winrt::TerminalApp::implementation
                     tab->_dispatch.DoAction(*tab, actionAndArgs);
                 }
             });
-            _moveRightMenuItem.Text(RS_(L"TabMoveRight"));
         }
 
         // Create a sub-menu for our extended move tab items.
@@ -1595,6 +1692,22 @@ namespace winrt::TerminalApp::implementation
         moveSubMenu.Items().Append(_moveRightMenuItem);
         moveSubMenu.Items().Append(_moveLeftMenuItem);
         flyout.Items().Append(moveSubMenu);
+
+        _UpdateMoveMenuItemLabels();
+    }
+
+    void Tab::_UpdateMoveMenuItemLabels()
+    {
+        if (_isVerticalTabActive)
+        {
+            _moveLeftMenuItem.Text(RS_(L"TabMoveUp"));
+            _moveRightMenuItem.Text(RS_(L"TabMoveDown"));
+        }
+        else
+        {
+            _moveLeftMenuItem.Text(RS_(L"TabMoveLeft"));
+            _moveRightMenuItem.Text(RS_(L"TabMoveRight"));
+        }
     }
 
     // Method Description:
@@ -1840,14 +1953,22 @@ namespace winrt::TerminalApp::implementation
                 // * NOT in a rename
                 // * AND (the content isn't a TermControl, OR the term control doesn't have focus in the search box)
                 if (!tab->_headerControl.InRename() &&
+                    !tab->_headerControlVertical.InRename() &&
                     (terminalControl == nullptr || !terminalControl.SearchBoxEditInFocus()))
                 {
                     tab->RequestFocusActiveControl.raise();
                 }
             }
         });
+        contextMenuFlyout.Opening([weakThis](auto&&, auto&&) {
+            if (auto tab{ weakThis.get() })
+            {
+                tab->_UpdateMoveMenuItemLabels();
+            }
+        });
 
         TabViewItem().ContextFlyout(contextMenuFlyout);
+        TabViewItemVertical().ContextFlyout(contextMenuFlyout);
     }
 
     // Method Description:
@@ -2360,6 +2481,10 @@ namespace winrt::TerminalApp::implementation
         Media::SolidColorBrush deselectedFontBrush{};
         Media::SolidColorBrush secondaryFontBrush{};
         Media::SolidColorBrush hoverTabBrush{};
+        Media::SolidColorBrush verticalDeselectedTabBrush{};
+        Media::SolidColorBrush verticalSelectedTabBrush{};
+        Media::SolidColorBrush verticalHoverTabBrush{};
+        Media::SolidColorBrush verticalPressedTabBrush{};
         Media::SolidColorBrush subtleFillColorSecondaryBrush;
         Media::SolidColorBrush subtleFillColorTertiaryBrush;
 
@@ -2391,16 +2516,14 @@ namespace winrt::TerminalApp::implementation
         {
             fontBrush.Color(winrt::Windows::UI::Colors::Black());
             auto secondaryFontColor = winrt::Windows::UI::Colors::Black();
-            // For alpha value see: https://github.com/microsoft/microsoft-ui-xaml/blob/7a33ad772d77d908aa6b316ec24e6d2eb3ebf571/dev/CommonStyles/Common_themeresources_any.xaml#L269
-            secondaryFontColor.A = 0x9E;
+            secondaryFontColor.A = 0x99;
             secondaryFontBrush.Color(secondaryFontColor);
         }
         else
         {
             fontBrush.Color(winrt::Windows::UI::Colors::White());
             auto secondaryFontColor = winrt::Windows::UI::Colors::White();
-            // For alpha value see: https://github.com/microsoft/microsoft-ui-xaml/blob/7a33ad772d77d908aa6b316ec24e6d2eb3ebf571/dev/CommonStyles/Common_themeresources_any.xaml#L14
-            secondaryFontColor.A = 0xC5;
+            secondaryFontColor.A = 0x99;
             secondaryFontBrush.Color(secondaryFontColor);
         }
 
@@ -2440,6 +2563,15 @@ namespace winrt::TerminalApp::implementation
         hoverTabBrush.Color(color);
         hoverTabBrush.Opacity(0.6);
 
+        verticalDeselectedTabBrush.Color(color);
+        verticalDeselectedTabBrush.Opacity(0.16);
+        verticalSelectedTabBrush.Color(color);
+        verticalSelectedTabBrush.Opacity(0.28);
+        verticalHoverTabBrush.Color(color);
+        verticalHoverTabBrush.Opacity(0.2);
+        verticalPressedTabBrush.Color(color);
+        verticalPressedTabBrush.Opacity(0.36);
+
         // Account for the color of the tab row when setting the color of text
         // on inactive tabs. Consider:
         // * black active tabs
@@ -2458,68 +2590,82 @@ namespace winrt::TerminalApp::implementation
             deselectedFontBrush.Color(winrt::Windows::UI::Colors::White());
         }
 
-        // Add the empty theme dictionaries
-        const auto& tabItemThemeResources{ TabViewItem().Resources().ThemeDictionaries() };
-        ResourceDictionary lightThemeDictionary;
-        ResourceDictionary darkThemeDictionary;
-        ResourceDictionary highContrastThemeDictionary;
-        tabItemThemeResources.Insert(winrt::box_value(L"Light"), lightThemeDictionary);
-        tabItemThemeResources.Insert(winrt::box_value(L"Dark"), darkThemeDictionary);
-        tabItemThemeResources.Insert(winrt::box_value(L"HighContrast"), highContrastThemeDictionary);
+        const auto applyColorToTabViewItem = [&](const MUX::Controls::TabViewItem& tabViewItem) {
+            // Add the empty theme dictionaries
+            const auto& tabItemThemeResources{ tabViewItem.Resources().ThemeDictionaries() };
+            tabItemThemeResources.Insert(winrt::box_value(L"Light"), ResourceDictionary{});
+            tabItemThemeResources.Insert(winrt::box_value(L"Dark"), ResourceDictionary{});
+            tabItemThemeResources.Insert(winrt::box_value(L"HighContrast"), ResourceDictionary{});
 
-        // Apply the color to the tab
-        TabViewItem().Background(deselectedTabBrush);
+            // Apply the color to the tab
+            tabViewItem.Background(deselectedTabBrush);
 
-        // Now actually set the resources we want in them.
-        // Before, we used to put these on the ResourceDictionary directly.
-        // However, HighContrast mode may require some adjustments. So let's just add
-        //   all three so we can make those adjustments on the HighContrast version.
-        for (const auto& [k, v] : tabItemThemeResources)
+            // Now actually set the resources we want in them.
+            // Before, we used to put these on the ResourceDictionary directly.
+            // However, HighContrast mode may require some adjustments. So let's just add
+            //   all three so we can make those adjustments on the HighContrast version.
+            for (const auto& [k, v] : tabItemThemeResources)
+            {
+                const bool isHighContrast = winrt::unbox_value<hstring>(k) == L"HighContrast";
+                const auto& currentDictionary = v.as<ResourceDictionary>();
+
+                // TabViewItem.Background
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderBackground"), selectedTabBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderBackgroundSelected"), selectedTabBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderBackgroundPointerOver"), isHighContrast ? fontBrush : hoverTabBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderBackgroundPressed"), selectedTabBrush);
+
+                // TabViewItem.Foreground (aka text)
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderForeground"), secondaryFontBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderForegroundSelected"), fontBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderForegroundPointerOver"), isHighContrast ? selectedTabBrush : fontBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderForegroundPressed"), fontBrush);
+
+                // TabViewItem.CloseButton.Foreground (aka X)
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonForeground"), deselectedFontBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonForegroundPressed"), isHighContrast ? deselectedFontBrush : secondaryFontBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonForegroundPointerOver"), isHighContrast ? deselectedFontBrush : fontBrush);
+
+                // TabViewItem.CloseButton.Foreground _when_ interacting with the tab
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderPressedCloseButtonForeground"), fontBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderPointerOverCloseButtonForeground"), isHighContrast ? selectedTabBrush : fontBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderSelectedCloseButtonForeground"), fontBrush);
+
+                // TabViewItem.CloseButton.Background (aka X button)
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBackgroundPressed"), isHighContrast ? selectedTabBrush : subtleFillColorTertiaryBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBackgroundPointerOver"), isHighContrast ? selectedTabBrush : subtleFillColorSecondaryBrush);
+
+                // A few miscellaneous resources that WinUI said may be removed in the future
+                currentDictionary.Insert(winrt::box_value(L"TabViewButtonForegroundActiveTab"), fontBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewButtonForegroundPressed"), fontBrush);
+                currentDictionary.Insert(winrt::box_value(L"TabViewButtonForegroundPointerOver"), fontBrush);
+
+                // Add a few extra ones for high contrast mode
+                // BODGY: contrary to the docs, Insert() seems to throw if the value already exists
+                //   Make sure you don't touch any that already exist here!
+                if (isHighContrast)
+                {
+                    // TabViewItem.CloseButton.Border: in HC mode, the border makes the button more clearly visible
+                    currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBorderBrushPressed"), fontBrush);
+                    currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBorderBrushPointerOver"), fontBrush);
+                    currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBorderBrushSelected"), fontBrush);
+                }
+            }
+        };
+
+        applyColorToTabViewItem(TabViewItem());
+        applyColorToTabViewItem(TabViewItemVertical());
+
+        const auto& verticalTabItemThemeResources{ TabViewItemVertical().Resources().ThemeDictionaries() };
+        for (const auto& [k, v] : verticalTabItemThemeResources)
         {
             const bool isHighContrast = winrt::unbox_value<hstring>(k) == L"HighContrast";
             const auto& currentDictionary = v.as<ResourceDictionary>();
 
-            // TabViewItem.Background
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderBackground"), selectedTabBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderBackgroundSelected"), selectedTabBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderBackgroundPointerOver"), isHighContrast ? fontBrush : hoverTabBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderBackgroundPressed"), selectedTabBrush);
-
-            // TabViewItem.Foreground (aka text)
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderForeground"), deselectedFontBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderForegroundSelected"), fontBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderForegroundPointerOver"), isHighContrast ? selectedTabBrush : fontBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderForegroundPressed"), fontBrush);
-
-            // TabViewItem.CloseButton.Foreground (aka X)
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonForeground"), deselectedFontBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonForegroundPressed"), isHighContrast ? deselectedFontBrush : secondaryFontBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonForegroundPointerOver"), isHighContrast ? deselectedFontBrush : fontBrush);
-
-            // TabViewItem.CloseButton.Foreground _when_ interacting with the tab
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderPressedCloseButtonForeground"), fontBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderPointerOverCloseButtonForeground"), isHighContrast ? selectedTabBrush : fontBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderSelectedCloseButtonForeground"), fontBrush);
-
-            // TabViewItem.CloseButton.Background (aka X button)
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBackgroundPressed"), isHighContrast ? selectedTabBrush : subtleFillColorTertiaryBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBackgroundPointerOver"), isHighContrast ? selectedTabBrush : subtleFillColorSecondaryBrush);
-
-            // A few miscellaneous resources that WinUI said may be removed in the future
-            currentDictionary.Insert(winrt::box_value(L"TabViewButtonForegroundActiveTab"), fontBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewButtonForegroundPressed"), fontBrush);
-            currentDictionary.Insert(winrt::box_value(L"TabViewButtonForegroundPointerOver"), fontBrush);
-
-            // Add a few extra ones for high contrast mode
-            // BODGY: contrary to the docs, Insert() seems to throw if the value already exists
-            //   Make sure you don't touch any that already exist here!
-            if (isHighContrast)
-            {
-                // TabViewItem.CloseButton.Border: in HC mode, the border makes the button more clearly visible
-                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBorderBrushPressed"), fontBrush);
-                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBorderBrushPointerOver"), fontBrush);
-                currentDictionary.Insert(winrt::box_value(L"TabViewItemHeaderCloseButtonBorderBrushSelected"), fontBrush);
-            }
+            currentDictionary.Insert(winrt::box_value(L"VerticalTabViewItemHeaderBackground"), isHighContrast ? deselectedTabBrush : verticalDeselectedTabBrush);
+            currentDictionary.Insert(winrt::box_value(L"VerticalTabViewItemHeaderBackgroundSelected"), isHighContrast ? selectedTabBrush : verticalSelectedTabBrush);
+            currentDictionary.Insert(winrt::box_value(L"VerticalTabViewItemHeaderBackgroundPointerOver"), isHighContrast ? fontBrush : verticalHoverTabBrush);
+            currentDictionary.Insert(winrt::box_value(L"VerticalTabViewItemHeaderBackgroundPressed"), isHighContrast ? selectedTabBrush : verticalPressedTabBrush);
         }
 
         _RefreshVisualState();
@@ -2540,6 +2686,10 @@ namespace winrt::TerminalApp::implementation
             L"TabViewItemHeaderBackgroundSelected",
             L"TabViewItemHeaderBackgroundPointerOver",
             L"TabViewItemHeaderBackgroundPressed",
+            L"VerticalTabViewItemHeaderBackground",
+            L"VerticalTabViewItemHeaderBackgroundSelected",
+            L"VerticalTabViewItemHeaderBackgroundPointerOver",
+            L"VerticalTabViewItemHeaderBackgroundPressed",
 
             // TabViewItem.Foreground (aka text)
             L"TabViewItemHeaderForeground",
@@ -2574,23 +2724,29 @@ namespace winrt::TerminalApp::implementation
             L"TabViewItemHeaderCloseButtonBorderBrushSelected"
         };
 
-        const auto& tabItemThemeResources{ TabViewItem().Resources().ThemeDictionaries() };
+        const auto clearColorFromTabViewItem = [&](const MUX::Controls::TabViewItem& tabViewItem) {
+            const auto& tabItemThemeResources{ tabViewItem.Resources().ThemeDictionaries() };
 
-        // simply clear any of the colors in the tab's dict
-        for (const auto& keyString : keys)
-        {
-            const auto key = winrt::box_value(keyString);
-            for (const auto& [_, v] : tabItemThemeResources)
+            // simply clear any of the colors in the tab's dict
+            for (const auto& keyString : keys)
             {
-                const auto& themeDictionary = v.as<ResourceDictionary>();
-                themeDictionary.Remove(key);
+                const auto key = winrt::box_value(keyString);
+                for (const auto& [_, v] : tabItemThemeResources)
+                {
+                    const auto& themeDictionary = v.as<ResourceDictionary>();
+                    themeDictionary.Remove(key);
+                }
             }
-        }
+        };
+
+        clearColorFromTabViewItem(TabViewItem());
+        clearColorFromTabViewItem(TabViewItemVertical());
 
         // GH#11382 DON'T set the background to null. If you do that, then the
         // tab won't be hit testable at all. Transparent, however, is a totally
         // valid hit test target. That makes sense.
         TabViewItem().Background(WUX::Media::SolidColorBrush{ Windows::UI::Colors::Transparent() });
+        TabViewItemVertical().Background(WUX::Media::SolidColorBrush{ Windows::UI::Colors::Transparent() });
 
         _RefreshVisualState();
     }
@@ -2612,23 +2768,26 @@ namespace winrt::TerminalApp::implementation
     // - <none>
     void Tab::_RefreshVisualState()
     {
-        const auto& item{ TabViewItem() };
+        const auto refreshItem = [](const MUX::Controls::TabViewItem& item) {
+            const auto& reqTheme = item.RequestedTheme();
+            item.RequestedTheme(ElementTheme::Light);
+            item.RequestedTheme(ElementTheme::Dark);
+            item.RequestedTheme(reqTheme);
 
-        const auto& reqTheme = TabViewItem().RequestedTheme();
-        item.RequestedTheme(ElementTheme::Light);
-        item.RequestedTheme(ElementTheme::Dark);
-        item.RequestedTheme(reqTheme);
+            if (item.IsSelected())
+            {
+                VisualStateManager::GoToState(item, L"Normal", true);
+                VisualStateManager::GoToState(item, L"Selected", true);
+            }
+            else
+            {
+                VisualStateManager::GoToState(item, L"Selected", true);
+                VisualStateManager::GoToState(item, L"Normal", true);
+            }
+        };
 
-        if (TabViewItem().IsSelected())
-        {
-            VisualStateManager::GoToState(item, L"Normal", true);
-            VisualStateManager::GoToState(item, L"Selected", true);
-        }
-        else
-        {
-            VisualStateManager::GoToState(item, L"Selected", true);
-            VisualStateManager::GoToState(item, L"Normal", true);
-        }
+        refreshItem(TabViewItem());
+        refreshItem(TabViewItemVertical());
     }
 
     TabCloseButtonVisibility Tab::CloseButtonVisibility()
@@ -2682,6 +2841,7 @@ namespace winrt::TerminalApp::implementation
             }
         }
         TabViewItem().IsClosable(isClosable);
+        TabViewItemVertical().IsClosable(isClosable);
     }
 
     bool Tab::_focused() const noexcept

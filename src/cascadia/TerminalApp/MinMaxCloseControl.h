@@ -37,10 +37,12 @@ namespace winrt::TerminalApp::implementation
 
         bool _focused{ false };
         std::shared_ptr<ThrottledFunc<winrt::Windows::UI::Xaml::Controls::Button>> _displayToolTip{ nullptr };
+        std::optional<CaptionButton> _lastHoveredButton{ std::nullopt };
         std::optional<CaptionButton> _lastPressedButton{ std::nullopt };
 
     private:
         const winrt::param::hstring& _normalState() const;
+        void _ReleaseButtons(bool forceUpdate);
     };
 }
 

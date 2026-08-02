@@ -24,6 +24,7 @@
 #include "NavConstants.h"
 #include "..\types\inc\utils.hpp"
 #include <..\WinRTUtils\inc\Utils.h>
+#include "..\inc\MaterialHelpers.h"
 
 #include <dwmapi.h>
 #include <fmt/compile.h>
@@ -41,6 +42,7 @@ using namespace winrt::Windows::UI::Core;
 using namespace winrt::Windows::System;
 using namespace winrt::Windows::UI::Xaml::Controls;
 using namespace winrt::Windows::Foundation::Collections;
+using namespace ::Microsoft::Terminal::MaterialHelpers;
 
 namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 {
@@ -105,7 +107,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         _profileVMs{ single_threaded_observable_vector<Editor::ProfileViewModel>() }
     {
         InitializeComponent();
-        _UpdateBackgroundForMica();
+        _UpdateSettingsBackground();
 
         _newTabMenuPageVM = winrt::make<NewTabMenuViewModel>(_settingsClone);
         _ntmViewModelChangedRevoker = _newTabMenuPageVM.PropertyChanged(winrt::auto_revoke, [this](auto&&, const PropertyChangedEventArgs& args) {
@@ -203,7 +205,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         _settingsSource = settings;
         _settingsClone = settings.Copy();
 
-        _UpdateBackgroundForMica();
+        _UpdateSettingsBackground();
 
         // Deduce information about the currently selected item
         IInspectable lastBreadcrumb;
@@ -303,7 +305,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         _hostingHwnd.emplace(reinterpret_cast<HWND>(hostingWindow));
         // Now that we have a HWND, update our own BG to account for if that
         // window is using mica or not.
-        _UpdateBackgroundForMica();
+        _UpdateSettingsBackground();
     }
 
     bool MainPage::TryPropagateHostingWindow(IInspectable object) noexcept
@@ -865,6 +867,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         {
             ShowLoadWarningsDialog.raise(*this, _settingsClone.Warnings());
         }
+        SettingsSaved.raise(*this, _settingsClone);
     }
 
     void MainPage::ResetButton_Click(const IInspectable& /*sender*/, const RoutedEventArgs& /*args*/)
@@ -1121,17 +1124,23 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         return SettingsNav().Background();
     }
 
-    // If the theme asks for Mica, then drop out our background, so that we
-    // can have mica too.
-    void MainPage::_UpdateBackgroundForMica()
+    void MainPage::_UpdateSettingsBackground()
     {
         // If we're in high contrast mode, don't override the theme.
         if (Windows::UI::ViewManagement::AccessibilitySettings accessibilitySettings; accessibilitySettings.HighContrast())
         {
+            _settingsAcrylicBrush = nullptr;
+            if (const auto bg = Resources().Lookup(winrt::box_value(L"SettingsPageBackground")))
+            {
+                if (const auto brush = bg.try_as<winrt::WUX::Media::Brush>())
+                {
+                    SettingsNav().Background(brush);
+                }
+            }
             return;
         }
 
-        bool isMicaAvailable = false;
+        int currentBackdropType = DWMSBT_NONE;
 
         // Check to see if our hosting window supports Mica at all. We'll check
         // to see if the window has Mica enabled - if it does, then we can
@@ -1145,7 +1154,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
             const auto hr = DwmGetWindowAttribute(*_hostingHwnd, DWMWA_SYSTEMBACKDROP_TYPE, &attribute, sizeof(attribute));
             if (SUCCEEDED(hr))
             {
-                isMicaAvailable = attribute == DWMSBT_MAINWINDOW;
+                currentBackdropType = attribute;
             }
         }
 
@@ -1167,17 +1176,62 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         //
         // To mitigate this, don't set the transparent background in the case
         // that our theme is different than the app's.
-        const bool actuallyUseMica = isMicaAvailable && (appTheme == requestedTheme);
+        const bool canUseWindowMaterial = currentBackdropType != DWMSBT_NONE && (appTheme == requestedTheme);
 
-        const auto bgKey = (theme.Window() != nullptr && theme.Window().UseMica()) && actuallyUseMica ?
-                               L"SettingsPageMicaBackground" :
-                               L"SettingsPageBackground";
+        const auto effectiveBackground{ ResolveApplicationBackgroundMaterial(
+            theme,
+            _settingsSource.GlobalSettings().ApplicationBackgroundMaterial()) };
+        const auto requiredBackdropType{ SystemBackdropForMaterial(effectiveBackground) };
+        const bool useWindowMaterial = canUseWindowMaterial && requiredBackdropType == currentBackdropType;
 
         // remember to use ThemeLookup to get the actual correct color for the
         // currently requested theme.
-        if (const auto bgColor = ThemeLookup(Resources(), requestedTheme, winrt::box_value(bgKey)))
+        if (const auto bgColor = ThemeLookup(Resources(), requestedTheme, winrt::box_value(L"SettingsPageBackground")))
         {
-            SettingsNav().Background(winrt::WUX::Media::SolidColorBrush(winrt::unbox_value<Windows::UI::Color>(bgColor)));
+            const auto color = winrt::unbox_value<Windows::UI::Color>(bgColor);
+
+            if (IsAcrylicDark(effectiveBackground) && appTheme == requestedTheme)
+            {
+                _settingsAcrylicBrush = nullptr;
+                SettingsNav().Background(winrt::WUX::Media::SolidColorBrush(useWindowMaterial ? AcrylicDarkOverlayTint : AcrylicDarkSolidTint));
+                return;
+            }
+
+            const auto useSettingsAcrylicBrush = IsAcrylicApplicationMaterial(effectiveBackground) &&
+                                                 !IsAcrylicDark(effectiveBackground) &&
+                                                 !useWindowMaterial;
+            if (useSettingsAcrylicBrush)
+            {
+                if (!_settingsAcrylicBrush)
+                {
+                    _settingsAcrylicBrush = winrt::WUX::Media::AcrylicBrush();
+                }
+                _settingsAcrylicBrush.TintOpacity(AcrylicDefaultTintOpacity);
+
+                const auto backdropStyle =
+                    _settingsSource.GlobalSettings().EnableUnfocusedAcrylic() ?
+                        winrt::WUX::Media::AcrylicBackgroundSource::Backdrop :
+                        winrt::WUX::Media::AcrylicBackgroundSource::HostBackdrop;
+
+                _settingsAcrylicBrush.BackgroundSource(backdropStyle);
+                _settingsAcrylicBrush.FallbackColor(color);
+                _settingsAcrylicBrush.TintColor(color);
+                SettingsNav().Background(_settingsAcrylicBrush);
+                return;
+            }
+
+            _settingsAcrylicBrush = nullptr;
+            if (useWindowMaterial)
+            {
+                if (const auto micaBgColor = ThemeLookup(Resources(), requestedTheme, winrt::box_value(L"SettingsPageMicaBackground")))
+                {
+                    SettingsNav().Background(winrt::WUX::Media::SolidColorBrush(winrt::unbox_value<Windows::UI::Color>(micaBgColor)));
+                }
+            }
+            else
+            {
+                SettingsNav().Background(winrt::WUX::Media::SolidColorBrush(color));
+            }
         }
     }
 

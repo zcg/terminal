@@ -518,6 +518,7 @@
         { "command": "toggleFullscreen", "id": "Terminal.ToggleFullscreen" },
         { "command": "toggleFocusMode", "id": "Terminal.ToggleFocusMode" },
         { "command": "toggleAlwaysOnTop", "id": "Terminal.ToggleAlwaysOnTop" },
+        { "command": "toggleVerticalTabs", "id": "Terminal.ToggleVerticalTabs" },
         { "command": "openNewTabDropdown", "id": "Terminal.OpenNewTabDropdown" },
         { "command": { "action": "openSettings", "target": "settingsUI" }, "id": "Terminal.OpenSettingsUI" },
         { "command": { "action": "openSettings", "target": "settingsFile" }, "id": "Terminal.OpenSettingsFile" },

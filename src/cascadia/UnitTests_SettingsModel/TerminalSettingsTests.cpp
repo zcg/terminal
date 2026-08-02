@@ -52,9 +52,81 @@ namespace SettingsModelUnitTests
         TEST_METHOD(MakeSettingsForProfile);
         TEST_METHOD(MakeSettingsForDefaultProfileThatDoesntExist);
         TEST_METHOD(TestLayerProfileOnColorScheme);
+        TEST_METHOD(TestTerminalBackgroundMaterials);
         TEST_METHOD(TestCommandlineToTitlePromotion);
         TEST_METHOD(TestInitialPositionParsing);
     };
+
+    void TerminalSettingsTests::TestTerminalBackgroundMaterials()
+    {
+        const auto createSettings = [](const std::string_view json) {
+            const auto settings = winrt::make_self<implementation::CascadiaSettings>(json);
+            const auto profile = settings->ActiveProfiles().GetAt(0);
+            return TerminalSettings::CreateWithProfile(*settings, profile).DefaultSettings();
+        };
+
+        static constexpr std::string_view defaultJson{ R"({
+            "defaultProfile": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+            "profiles": { "list": [{
+                "name": "profile0",
+                "guid": "{6239a42c-0000-49a3-80bd-e8fdd045185c}"
+            }] }
+        })" };
+        const auto defaultSettings = createSettings(defaultJson);
+        VERIFY_IS_FALSE(defaultSettings->UseAcrylic());
+        VERIFY_IS_FALSE(defaultSettings->UseWindowBackgroundMaterial());
+
+        static constexpr std::string_view legacyAcrylicJson{ R"({
+            "defaultProfile": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+            "profiles": { "list": [{
+                "name": "profile0",
+                "guid": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+                "useAcrylic": true
+            }] }
+        })" };
+        const auto legacyAcrylicSettings = createSettings(legacyAcrylicJson);
+        VERIFY_IS_TRUE(legacyAcrylicSettings->UseAcrylic());
+        VERIFY_IS_FALSE(legacyAcrylicSettings->UseWindowBackgroundMaterial());
+
+        static constexpr std::string_view solidJson{ R"({
+            "defaultProfile": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+            "profiles": { "list": [{
+                "name": "profile0",
+                "guid": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+                "useAcrylic": true,
+                "backgroundMaterial": "solid"
+            }] }
+        })" };
+        const auto solidSettings = createSettings(solidJson);
+        VERIFY_IS_FALSE(solidSettings->UseAcrylic());
+        VERIFY_IS_FALSE(solidSettings->UseWindowBackgroundMaterial());
+
+        static constexpr std::string_view acrylicJson{ R"({
+            "defaultProfile": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+            "profiles": { "list": [{
+                "name": "profile0",
+                "guid": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+                "backgroundMaterial": "acrylic"
+            }] }
+        })" };
+        const auto acrylicSettings = createSettings(acrylicJson);
+        VERIFY_IS_TRUE(acrylicSettings->UseAcrylic());
+        VERIFY_IS_FALSE(acrylicSettings->UseWindowBackgroundMaterial());
+
+        static constexpr std::string_view windowMaterialJson{ R"({
+            "rendering.graphicsAPI": "direct2d",
+            "defaultProfile": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+            "profiles": { "list": [{
+                "name": "profile0",
+                "guid": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+                "backgroundMaterial": "useWindowMaterial"
+            }] }
+        })" };
+        const auto windowMaterialSettings = createSettings(windowMaterialJson);
+        VERIFY_IS_FALSE(windowMaterialSettings->UseAcrylic());
+        VERIFY_IS_TRUE(windowMaterialSettings->UseWindowBackgroundMaterial());
+        VERIFY_ARE_EQUAL(GraphicsAPI::Direct2D, windowMaterialSettings->GraphicsAPI());
+    }
 
     // CascadiaSettings::_normalizeCommandLine abuses some aspects from CommandLineToArgvW
     // to simplify the implementation. It assumes that all arguments returned by

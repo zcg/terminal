@@ -52,6 +52,16 @@
                       Style="{StaticResource ComboBoxSettingStyle}" />
         </local:SettingContainer>
 
+        <!--  Tab bar position  -->
+        <local:SettingContainer x:Name="TabPosition"
+                                x:Uid="Globals_TabPosition">
+            <ComboBox AutomationProperties.AccessibilityView="Content"
+                      ItemTemplate="{StaticResource EnumComboBoxTemplate}"
+                      ItemsSource="{x:Bind ViewModel.TabPositionList, Mode=OneWay}"
+                      SelectedItem="{x:Bind ViewModel.CurrentTabPosition, Mode=TwoWay}"
+                      Style="{StaticResource ComboBoxSettingStyle}" />
+        </local:SettingContainer>
+
         <!--  Show Titlebar  -->
         <local:SettingContainer x:Name="ShowTitlebar"
                                 x:Uid="Globals_ShowTitlebar">
@@ -75,11 +85,14 @@
                           Style="{StaticResource ToggleSwitchInExpanderStyle}" />
         </local:SettingContainer>
 
-        <!--  Show Acrylic in Tab Row  -->
-        <local:SettingContainer x:Name="AcrylicTabRow"
-                                x:Uid="Globals_AcrylicTabRow">
-            <ToggleSwitch IsOn="{x:Bind ViewModel.UseAcrylicInTabRow, Mode=TwoWay}"
-                          Style="{StaticResource ToggleSwitchInExpanderStyle}" />
+        <!--  Application background material  -->
+        <local:SettingContainer x:Name="ApplicationBackgroundMaterial"
+                                x:Uid="Globals_ApplicationBackgroundMaterial">
+            <ComboBox AutomationProperties.AccessibilityView="Content"
+                      ItemTemplate="{StaticResource EnumComboBoxTemplate}"
+                      ItemsSource="{x:Bind ViewModel.ApplicationBackgroundMaterialList, Mode=OneWay}"
+                      SelectedItem="{x:Bind ViewModel.CurrentApplicationBackgroundMaterial, Mode=TwoWay}"
+                      Style="{StaticResource ComboBoxSettingStyle}" />
         </local:SettingContainer>
 
         <!--  Show Title in Titlebar  -->

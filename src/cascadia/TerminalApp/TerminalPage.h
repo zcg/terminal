@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <dwmapi.h>
 #include <ThrottledFunc.h>
 
 #include "TerminalPage.g.h"
@@ -220,6 +221,7 @@ namespace winrt::TerminalApp::implementation
 
         void OpenSettingsUI();
         void WindowActivated(const bool activated);
+        void SystemBackdropType(int32_t systemBackdropType);
         bool FocusTab(const winrt::TerminalApp::Tab& tab);
 
         bool OnDirectKeyEvent(const uint32_t vkey, const uint8_t scanCode, const bool down);
@@ -272,6 +274,7 @@ namespace winrt::TerminalApp::implementation
     private:
         friend struct TerminalPageT<TerminalPage>; // for Xaml to bind events
         std::optional<HWND> _hostingHwnd;
+        int32_t _systemBackdropType{ DWMSBT_NONE };
 
         // If you add controls here, but forget to null them either here or in
         // the ctor, you're going to have a bad time. It'll mysteriously fail to
@@ -280,8 +283,26 @@ namespace winrt::TerminalApp::implementation
         // updated in App::_ApplyTheme. The roots currently is _tabRow
         // (which is a root when the tabs are in the titlebar.)
         Microsoft::UI::Xaml::Controls::TabView _tabView{ nullptr };
+        Microsoft::UI::Xaml::Controls::TabView _tabViewVertical{ nullptr };
+        bool _verticalTabActive{ false };
+        void _SyncVerticalTabItems();
+        void _UpdateVerticalTabSelection();
         TerminalApp::TabRowControl _tabRow{ nullptr };
+        Windows::UI::Xaml::Controls::Grid _contentRoot{ nullptr };
         Windows::UI::Xaml::Controls::Grid _tabContent{ nullptr };
+
+        Microsoft::Terminal::Settings::Model::TabPosition _tabPosition{ Microsoft::Terminal::Settings::Model::TabPosition::Top };
+        Windows::UI::Xaml::Controls::Border _tabStripSplitter{ nullptr };
+        Windows::UI::Xaml::Controls::Border _tabStripPreviewLine{ nullptr };
+        Windows::UI::Xaml::Media::TranslateTransform _tabStripPreviewTransform{ nullptr };
+        bool _splitterDragging{ false };
+        double _splitterDragStartX{ 0.0 };
+        double _splitterDragStartWidth{ 0.0 };
+        double _tabStripWidth{ 200.0 };
+        double _pendingTabStripWidth{ 200.0 };
+        bool _tabPositionApplied{ false };
+        bool _showTabsInTitlebarApplied{ false };
+
         Microsoft::UI::Xaml::Controls::SplitButton _newTabButton{ nullptr };
         Windows::UI::Xaml::Controls::MenuFlyout _workspaceFlyout{ nullptr };
         Windows::UI::Xaml::Controls::Button _workspaceDropdown{ nullptr };
@@ -312,6 +333,7 @@ namespace winrt::TerminalApp::implementation
 
         bool _activated{ false };
         bool _visible{ true };
+        winrt::Windows::UI::Xaml::Media::AcrylicBrush _tabRowAcrylicBrush{ nullptr };
 
         std::vector<std::vector<Microsoft::Terminal::Settings::Model::ActionAndArgs>> _previouslyClosedPanesAndTabs{};
 
@@ -503,6 +525,7 @@ namespace winrt::TerminalApp::implementation
 
         safe_void_coroutine _LaunchSettings(const Microsoft::Terminal::Settings::Model::SettingsTarget target);
 
+        bool _tabDragDropEnabled() const;
         void _TabDragStarted(const IInspectable& sender, const IInspectable& eventArgs);
         void _TabDragCompleted(const IInspectable& sender, const IInspectable& eventArgs);
 
@@ -545,7 +568,9 @@ namespace winrt::TerminalApp::implementation
                                         const winrt::TerminalApp::Tab& sourceTab = nullptr,
                                         winrt::Microsoft::Terminal::TerminalConnection::ITerminalConnection existingConnection = nullptr);
 
-        void _RefreshUIForSettingsReload();
+        void _ApplyTabPosition();
+
+        void _RefreshUIForSettingsReload(bool updateSettingsTab = true);
 
         void _SetNewTabButtonColor(til::color color, til::color accentColor);
         void _ClearNewTabButtonColor();

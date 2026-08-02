@@ -85,6 +85,7 @@
     X(winrt::Microsoft::Terminal::Control::AmbiguousWidth, AmbiguousWidth, winrt::Microsoft::Terminal::Control::AmbiguousWidth::Narrow)                  \
     X(winrt::Microsoft::Terminal::Control::DefaultInputScope, DefaultInputScope, winrt::Microsoft::Terminal::Control::DefaultInputScope::Default)        \
     X(bool, UseBackgroundImageForWindow, false)                                                                                                          \
+    X(bool, UseWindowBackgroundMaterial, false)                                                                                                         \
     X(bool, ShowMarks, false)                                                                                                                            \
     X(winrt::Microsoft::Terminal::Control::CopyFormat, CopyFormatting, 0)                                                                                \
     X(bool, RightClickContextMenu, false)                                                                                                                \

@@ -29,6 +29,14 @@ namespace Microsoft.Terminal.Settings.Model
         All = 0xffffffff
     };
 
+    enum TerminalBackgroundMaterial
+    {
+        Default,
+        Solid,
+        Acrylic,
+        UseWindowMaterial
+    };
+
     interface IAppearanceConfig
     {
         Microsoft.Terminal.Settings.Model.Profile SourceProfile { get; };
@@ -56,5 +64,6 @@ namespace Microsoft.Terminal.Settings.Model
         INHERITABLE_APPEARANCE_SETTING(Microsoft.Terminal.Core.AdjustTextMode, AdjustIndistinguishableColors);
         INHERITABLE_APPEARANCE_SETTING(Single, Opacity);
         INHERITABLE_APPEARANCE_SETTING(Boolean, UseAcrylic);
+        INHERITABLE_APPEARANCE_SETTING(Microsoft.Terminal.Settings.Model.TerminalBackgroundMaterial, TerminalBackgroundMaterial);
     };
 }

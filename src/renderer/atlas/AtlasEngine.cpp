@@ -82,6 +82,17 @@ try
         _api.scrollOffset = 0;
     }
 
+    // Transparent swapchains are alpha-composited by DWM over the window backdrop, which
+    // doesn't reliably honor the Present1 scroll/dirty-rect optimization: glyph pixels can
+    // linger at their old positions (ghosting) while freshly scrolled-in glyphs never show
+    // up. Fall back to full redraws + full presents for these targets, like the debug flag
+    // above.
+    if (_p.s->target->useAlpha)
+    {
+        _api.invalidatedRows = invalidatedRowsAll;
+        _api.scrollOffset = 0;
+    }
+
     // Clamp invalidation rects into valid value ranges.
     {
         _api.invalidatedCursorArea.left = std::min(_api.invalidatedCursorArea.left, _p.s->viewportCellCount.x);

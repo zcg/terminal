@@ -89,6 +89,7 @@ namespace TerminalApp
         Windows.UI.Xaml.ElementTheme GetRequestedTheme();
         Microsoft.Terminal.Settings.Model.LaunchMode GetLaunchMode();
         Boolean GetShowTabsInTitlebar();
+        Microsoft.Terminal.Settings.Model.TabPosition GetTabPosition();
         Boolean GetInitialAlwaysOnTop();
         Boolean GetInitialShowTabsFullscreen();
         Single CalcSnappedDimension(Boolean widthOrHeight, Single dimension);
@@ -100,6 +101,7 @@ namespace TerminalApp
         Windows.UI.Xaml.Media.Brush TitlebarBrush { get; };
         Windows.UI.Xaml.Media.Brush FrameBrush { get; };
         void WindowActivated(Boolean activated);
+        void SystemBackdropType(Int32 systemBackdropType);
 
         Boolean GetMinimizeToNotificationArea();
         Boolean GetAlwaysShowNotificationIcon();

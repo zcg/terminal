@@ -1073,7 +1073,8 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         auto settings{ _core.Settings() };
         auto bgColor = til::color{ _core.FocusedAppearance().DefaultBackground() };
 
-        auto transparentBg = settings.UseBackgroundImageForWindow();
+        const auto useWindowBackgroundMaterial = _core.UseWindowBackgroundMaterial();
+        auto transparentBg = settings.UseBackgroundImageForWindow() || useWindowBackgroundMaterial;
         if (transparentBg)
         {
             bgColor = Windows::UI::Colors::Transparent();
@@ -1151,7 +1152,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     // - bg: the new color to use as the background color.
     void TermControl::_changeBackgroundColor(til::color bg)
     {
-        auto transparent_bg = _core.Settings().UseBackgroundImageForWindow();
+        auto transparent_bg = _core.Settings().UseBackgroundImageForWindow() || _core.UseWindowBackgroundMaterial();
         if (transparent_bg)
         {
             bg = Windows::UI::Colors::Transparent();
@@ -1201,6 +1202,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     {
         const auto opacity{ _core.Opacity() };
         const auto useAcrylic{ _core.UseAcrylic() };
+        const auto useWindowBackgroundMaterial{ _core.UseWindowBackgroundMaterial() };
         auto changed = false;
         // GH#11743, #11619: If we're changing whether or not acrylic is used,
         // then just entirely reinitialize the brush. The primary way that this
@@ -1225,8 +1227,9 @@ namespace winrt::Microsoft::Terminal::Control::implementation
                 _InitializeBackgroundBrush();
                 return;
             }
-            changed = solidColor.Opacity() != opacity;
-            solidColor.Opacity(opacity);
+            const auto solidOpacity = useWindowBackgroundMaterial ? 1.0f : opacity;
+            changed = solidColor.Opacity() != solidOpacity;
+            solidColor.Opacity(solidOpacity);
         }
         // Send a BG brush changed event, so you can mouse wheel the
         // transparency of the titlebar too.
@@ -3753,6 +3756,16 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     float TermControl::BackgroundOpacity() const
     {
         return _core.Opacity();
+    }
+
+    void TermControl::WindowBackgroundMaterialAvailable(const bool available)
+    {
+        const auto wasUsingWindowMaterial = _core.UseWindowBackgroundMaterial();
+        _core.WindowBackgroundMaterialAvailable(available);
+        if (wasUsingWindowMaterial != _core.UseWindowBackgroundMaterial())
+        {
+            _InitializeBackgroundBrush();
+        }
     }
 
     bool TermControl::HasSelection() const

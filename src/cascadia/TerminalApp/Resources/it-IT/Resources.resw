@@ -997,6 +997,12 @@
   <data name="TabMoveRight" xml:space="preserve">
     <value>Sposta a destra</value>
   </data>
+  <data name="TabMoveUp" xml:space="preserve">
+    <value>Vai su</value>
+  </data>
+  <data name="TabMoveDown" xml:space="preserve">
+    <value>Vai giù</value>
+  </data>
   <data name="InvalidRegex" xml:space="preserve">
     <value>È stata trovata un'espressione regolare non valida.</value>
   </data>

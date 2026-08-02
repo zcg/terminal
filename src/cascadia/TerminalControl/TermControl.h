@@ -106,6 +106,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         bool BracketedPasteEnabled() const noexcept;
 
         float BackgroundOpacity() const;
+        void WindowBackgroundMaterialAvailable(bool available);
 
         uint64_t OwningHwnd();
         void OwningHwnd(uint64_t owner);

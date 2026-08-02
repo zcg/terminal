@@ -18,6 +18,12 @@ namespace Microsoft.Terminal.Settings.Editor
         IInspectable CurrentNewTabPosition;
         Windows.Foundation.Collections.IObservableVector<Microsoft.Terminal.Settings.Editor.EnumEntry> NewTabPositionList { get; };
 
+        IInspectable CurrentTabPosition;
+        Windows.Foundation.Collections.IObservableVector<Microsoft.Terminal.Settings.Editor.EnumEntry> TabPositionList { get; };
+
+        IInspectable CurrentApplicationBackgroundMaterial;
+        Windows.Foundation.Collections.IObservableVector<Microsoft.Terminal.Settings.Editor.EnumEntry> ApplicationBackgroundMaterialList { get; };
+
         IInspectable CurrentTabWidthMode;
         Windows.Foundation.Collections.IObservableVector<Microsoft.Terminal.Settings.Editor.EnumEntry> TabWidthModeList { get; };
 
@@ -28,7 +34,6 @@ namespace Microsoft.Terminal.Settings.Editor
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(Boolean, AlwaysShowTabs);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(Boolean, ShowTabsFullscreen);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(Boolean, ShowTabsInTitlebar);
-        PERMANENT_OBSERVABLE_PROJECTED_SETTING(Boolean, UseAcrylicInTabRow);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(Boolean, ShowTitleInTitlebar);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(Boolean, AlwaysOnTop);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(Boolean, AutoHideWindow);

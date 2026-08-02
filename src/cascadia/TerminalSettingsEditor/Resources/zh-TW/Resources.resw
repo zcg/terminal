@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -280,6 +280,34 @@
     <value>在目前索引標籤之後</value>
     <comment>An option to choose from for the "Position of newly created tabs" setting. When selected new tab appears after the current tab.</comment>
   </data>
+  <data name="Globals_NewTabPositionAfterLastTabExceptDuplicate.Content" xml:space="preserve">
+    <value>在最後一個索引標籤之後，重複索引標籤除外</value>
+    <comment>An option to choose from for the "Position of newly created tabs" setting. When selected new tabs appear after the last tab, but duplicated tabs appear after the original tab.</comment>
+  </data>
+  <data name="Globals_TabPosition.Header" xml:space="preserve">
+    <value>索引標籤列位置</value>
+    <comment>Header for a control to select where the tab strip is shown.</comment>
+  </data>
+  <data name="Globals_TabPosition.HelpText" xml:space="preserve">
+    <value>控制索引標籤列的顯示位置：視窗頂端、底端、左側或右側。</value>
+    <comment>A description for what the "tab bar position" setting does.</comment>
+  </data>
+  <data name="Globals_TabPositionTop.Content" xml:space="preserve">
+    <value>頂端</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
+  <data name="Globals_TabPositionBottom.Content" xml:space="preserve">
+    <value>底端</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
+  <data name="Globals_TabPositionLeft.Content" xml:space="preserve">
+    <value>左側（垂直）</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
+  <data name="Globals_TabPositionRight.Content" xml:space="preserve">
+    <value>右側（垂直）</value>
+    <comment>An option to choose from for the "tab bar position" setting.</comment>
+  </data>
   <data name="Globals_CopyOnSelect.Header" xml:space="preserve">
     <value>自動將選取項目複製到剪貼簿</value>
     <comment>Header for a control to toggle whether selected text should be copied to the clipboard automatically, or not.</comment>
@@ -513,9 +541,37 @@
     <value>停用時，標題列會出現在索引標籤上方。</value>
     <comment>A description for what the "show titlebar" setting does. Presented near "Globals_ShowTitlebar.Header".</comment>
   </data>
-  <data name="Globals_AcrylicTabRow.Header" xml:space="preserve">
-    <value>在索引標籤列中使用壓克力材料</value>
-    <comment>Header for a control to toggle whether "acrylic material" is used. "Acrylic material" is a Microsoft-specific term: https://docs.microsoft.com/en-us/windows/apps/design/style/acrylic</comment>
+  <data name="Globals_ApplicationBackgroundMaterial.Header" xml:space="preserve">
+    <value>應用程式背景材質</value>
+    <comment>Header for a control to choose the background material used by the application window.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterial.HelpText" xml:space="preserve">
+    <value>選擇應用程式視窗、索引標籤列和設定介面使用的材質。不會改變終端機內容區域；若希望內容區與視窗背景材質一致，請將設定檔的終端機背景材質設為「使用視窗材質」。</value>
+    <comment>A description for what the "application background material" setting does. Presented near "Globals_ApplicationBackgroundMaterial.Header".</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialDefault.Content" xml:space="preserve">
+    <value>預設</value>
+    <comment>An option to choose from for the "application background material" setting. When selected, the application uses the active theme's default behavior.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialSolid.Content" xml:space="preserve">
+    <value>純色</value>
+    <comment>An option to choose from for the "application background material" setting. When selected, the application uses an opaque solid background.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialMica.Content" xml:space="preserve">
+    <value>Mica</value>
+    <comment>An option to choose from for the "application background material" setting. "Mica" is a Microsoft-specific material name.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialMicaAlt.Content" xml:space="preserve">
+    <value>Mica Alt</value>
+    <comment>An option to choose from for the "application background material" setting. "Mica Alt" is a Microsoft-specific material name.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialAcrylic.Content" xml:space="preserve">
+    <value>壓克力</value>
+    <comment>An option to choose from for the "application background material" setting. "Acrylic" is a Microsoft-specific material name.</comment>
+  </data>
+  <data name="Globals_ApplicationBackgroundMaterialAcrylicDark.Content" xml:space="preserve">
+    <value>壓克力（深色）</value>
+    <comment>An option to choose from for the "application background material" setting. "Acrylic" is a Microsoft-specific material name.</comment>
   </data>
   <data name="Globals_ShowTitleInTitlebar.Header" xml:space="preserve">
     <value>使用作用中的終端機標題做為應用程式標題</value>
@@ -1276,6 +1332,30 @@
   <data name="Profile_UseAcrylic.HelpText" xml:space="preserve">
     <value>在視窗的背景套用半透明的紋理。</value>
     <comment>A description for what the "Profile_UseAcrylic" setting does.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterial.Header" xml:space="preserve">
+    <value>終端機背景材質</value>
+    <comment>Header for a control to choose the background material used by a terminal profile.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterial.HelpText" xml:space="preserve">
+    <value>選擇此設定檔的終端機背景使用的材質。</value>
+    <comment>A description for what the "Profile_TerminalBackgroundMaterial" setting does.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterialDefault.Content" xml:space="preserve">
+    <value>預設</value>
+    <comment>An option to choose from for the "terminal background material" setting. When selected, the profile inherits its background material.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterialSolid.Content" xml:space="preserve">
+    <value>純色</value>
+    <comment>An option to choose from for the "terminal background material" setting. When selected, the profile uses a solid background.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterialAcrylic.Content" xml:space="preserve">
+    <value>壓克力</value>
+    <comment>An option to choose from for the "terminal background material" setting. "Acrylic" is a Microsoft-specific material name.</comment>
+  </data>
+  <data name="Profile_TerminalBackgroundMaterialUseWindowMaterial.Content" xml:space="preserve">
+    <value>使用視窗材質</value>
+    <comment>An option to choose from for the "terminal background material" setting. When selected, the profile uses the application window's background material.</comment>
   </data>
   <data name="Profile_UseDesktopImage.Content" xml:space="preserve">
     <value>使用桌面背景</value>

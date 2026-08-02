@@ -40,6 +40,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         INITIALIZE_BINDABLE_ENUM_SETTING_REVERSE_ORDER(CloseOnExitMode, CloseOnExitMode, winrt::Microsoft::Terminal::Settings::Model::CloseOnExitMode, L"Profile_CloseOnExit", L"Content");
         INITIALIZE_BINDABLE_ENUM_SETTING(ScrollState, ScrollbarState, winrt::Microsoft::Terminal::Control::ScrollbarState, L"Profile_ScrollbarVisibility", L"Content");
         INITIALIZE_BINDABLE_ENUM_SETTING(PathTranslationStyle, PathTranslationStyle, winrt::Microsoft::Terminal::Control::PathTranslationStyle, L"Profile_PathTranslationStyle", L"Content");
+        INITIALIZE_BINDABLE_ENUM_SETTING(TerminalBackgroundMaterial, TerminalBackgroundMaterial, winrt::Microsoft::Terminal::Settings::Model::TerminalBackgroundMaterial, L"Profile_TerminalBackgroundMaterial", L"Content");
 
         _InitializeCurrentBellSounds();
 
@@ -106,6 +107,10 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
             {
                 _NotifyChanges(L"CurrentPathTranslationStyle");
             }
+            else if (viewModelProperty == L"UseAcrylic" || viewModelProperty == L"TerminalBackgroundMaterial")
+            {
+                _NotifyChanges(L"CurrentTerminalBackgroundMaterial", L"HasTerminalBackgroundMaterial");
+            }
             else if (viewModelProperty == L"Padding")
             {
                 _parsedPadding = StringToXamlThickness(_profile.Padding());
@@ -156,6 +161,65 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
         _parsedPadding = StringToXamlThickness(_profile.Padding());
         _defaultAppearanceViewModel.IsDefault(true);
+    }
+
+    Model::TerminalBackgroundMaterial ProfileViewModel::TerminalBackgroundMaterial()
+    {
+        const auto appearance = _profile.DefaultAppearance();
+        const auto material = appearance.TerminalBackgroundMaterial();
+        if (appearance.HasTerminalBackgroundMaterial() || appearance.TerminalBackgroundMaterialOverrideSource() || material != Model::TerminalBackgroundMaterial::Default)
+        {
+            return material;
+        }
+
+        if (!appearance.UseAcrylicOverrideSource())
+        {
+            return Model::TerminalBackgroundMaterial::Default;
+        }
+
+        return appearance.UseAcrylic() ? Model::TerminalBackgroundMaterial::Acrylic : Model::TerminalBackgroundMaterial::Solid;
+    }
+
+    void ProfileViewModel::TerminalBackgroundMaterial(const Model::TerminalBackgroundMaterial value)
+    {
+        if (TerminalBackgroundMaterial() == value && HasTerminalBackgroundMaterial())
+        {
+            return;
+        }
+
+        const auto appearance = _profile.DefaultAppearance();
+        appearance.TerminalBackgroundMaterial(value);
+        appearance.ClearUseAcrylic();
+        _NotifyChanges(L"CurrentTerminalBackgroundMaterial", L"HasTerminalBackgroundMaterial");
+    }
+
+    void ProfileViewModel::ClearTerminalBackgroundMaterial()
+    {
+        const auto appearance = _profile.DefaultAppearance();
+        const auto hadValue = HasTerminalBackgroundMaterial();
+        appearance.ClearTerminalBackgroundMaterial();
+        appearance.ClearUseAcrylic();
+        if (hadValue)
+        {
+            _NotifyChanges(L"CurrentTerminalBackgroundMaterial", L"HasTerminalBackgroundMaterial");
+        }
+    }
+
+    bool ProfileViewModel::HasTerminalBackgroundMaterial() const
+    {
+        const auto appearance = _profile.DefaultAppearance();
+        return appearance.HasTerminalBackgroundMaterial() || appearance.HasUseAcrylic();
+    }
+
+    Model::IAppearanceConfig ProfileViewModel::TerminalBackgroundMaterialOverrideSource() const
+    {
+        const auto appearance = _profile.DefaultAppearance();
+        if (const auto source = appearance.TerminalBackgroundMaterialOverrideSource())
+        {
+            return source;
+        }
+
+        return appearance.UseAcrylicOverrideSource();
     }
 
     void ProfileViewModel::LeftPadding(double value) noexcept

@@ -290,6 +290,17 @@
           "description": "When set to true, the window will have an acrylic material background when unfocused. When set to false, the window will have a plain, untextured background when unfocused.",
           "type": "boolean"
         },
+        "backgroundMaterial": {
+          "default": "default",
+          "description": "Sets the terminal content material for this unfocused appearance. useWindowMaterial uses the active application window backdrop and falls back to solid when the backdrop could not be applied.",
+          "enum": [
+            "default",
+            "solid",
+            "acrylic",
+            "useWindowMaterial"
+          ],
+          "type": "string"
+        },
         "opacity": {
           "default": 100,
           "description": "Sets the opacity of the window for the profile when unfocused. Accepts values from 0-100.",
@@ -2613,6 +2624,19 @@
           "description": "When set to true, the tab row will have an acrylic material background with 50% opacity.",
           "type": "boolean"
         },
+        "applicationBackgroundMaterial": {
+          "default": "default",
+          "description": "Sets the material used by the application window, tab row, and settings UI. This setting does not alter terminal content; terminal content continues to use the profile background and useAcrylic settings.",
+          "enum": [
+            "default",
+            "solid",
+            "mica",
+            "micaAlt",
+            "acrylic",
+            "acrylicDark"
+          ],
+          "type": "string"
+        },
         "actions": {
           "description": "Properties are specific to each custom action.",
           "items": {
@@ -3219,6 +3243,17 @@
           "default": false,
           "description": "When set to true, the window will have an acrylic material background. When set to false, the window will have a plain, untextured background.",
           "type": "boolean"
+        },
+        "backgroundMaterial": {
+          "default": "default",
+          "description": "Sets the terminal content material for this profile. default preserves the legacy opacity and useAcrylic behavior. useWindowMaterial uses the active application window backdrop and falls back to solid when the backdrop could not be applied.",
+          "enum": [
+            "default",
+            "solid",
+            "acrylic",
+            "useWindowMaterial"
+          ],
+          "type": "string"
         },
         "pathTranslationStyle": {
           "default": "none",

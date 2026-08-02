@@ -134,6 +134,7 @@ namespace Microsoft::Console::Utils
     std::wstring EvaluateStartingDirectory(std::wstring_view cwd, std::wstring_view startingDirectory);
 
     bool IsWindows11() noexcept;
+    bool IsDwmSystemBackdropSupported() noexcept;
 
     bool IsLikelyToBeEmojiOrSymbolIcon(std::wstring_view text) noexcept;
 }

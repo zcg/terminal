@@ -72,6 +72,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         Editor::ExtensionsViewModel ExtensionsVM() const noexcept { return _extensionsVM; }
         Editor::ActionsViewModel ActionsVM() const noexcept { return _actionsVM; }
 
+        til::typed_event<Windows::Foundation::IInspectable, Model::CascadiaSettings> SettingsSaved;
         til::typed_event<Windows::Foundation::IInspectable, Model::SettingsTarget> OpenJson;
         til::typed_event<Windows::Foundation::IInspectable, Windows::Foundation::Collections::IVectorView<Model::SettingsLoadWarnings>> ShowLoadWarningsDialog;
 
@@ -82,6 +83,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
         Model::CascadiaSettings _settingsSource;
         Model::CascadiaSettings _settingsClone;
+        winrt::Windows::UI::Xaml::Media::AcrylicBrush _settingsAcrylicBrush{ nullptr };
 
         std::optional<HWND> _hostingHwnd;
 
@@ -104,7 +106,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
         void _AnnounceNavPaneState(bool opened);
 
-        void _UpdateBackgroundForMica();
+        void _UpdateSettingsBackground();
         void _MoveXamlParsedNavItemsIntoItemSource();
 
         safe_void_coroutine _UpdateSearchIndex();

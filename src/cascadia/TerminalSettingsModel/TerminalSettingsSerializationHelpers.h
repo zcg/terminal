@@ -272,9 +272,42 @@ JSON_ENUM_MAPPER(::winrt::Windows::UI::Xaml::ElementTheme)
 
 JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::NewTabPosition)
 {
-    JSON_MAPPINGS(2) = {
+    JSON_MAPPINGS(3) = {
         pair_type{ "afterLastTab", ValueType::AfterLastTab },
         pair_type{ "afterCurrentTab", ValueType::AfterCurrentTab },
+        pair_type{ "afterLastTabExceptDuplicate", ValueType::AfterLastTabExceptDuplicate },
+    };
+};
+
+JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::TabPosition)
+{
+    JSON_MAPPINGS(4) = {
+        pair_type{ "top", ValueType::Top },
+        pair_type{ "bottom", ValueType::Bottom },
+        pair_type{ "left", ValueType::Left },
+        pair_type{ "right", ValueType::Right },
+    };
+};
+
+JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::BackgroundMaterial)
+{
+    JSON_MAPPINGS(6) = {
+        pair_type{ "default", ValueType::Default },
+        pair_type{ "solid", ValueType::Solid },
+        pair_type{ "mica", ValueType::Mica },
+        pair_type{ "micaAlt", ValueType::MicaAlt },
+        pair_type{ "acrylic", ValueType::Acrylic },
+        pair_type{ "acrylicDark", ValueType::AcrylicDark },
+    };
+};
+
+JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::TerminalBackgroundMaterial)
+{
+    JSON_MAPPINGS(4) = {
+        pair_type{ "default", ValueType::Default },
+        pair_type{ "solid", ValueType::Solid },
+        pair_type{ "acrylic", ValueType::Acrylic },
+        pair_type{ "useWindowMaterial", ValueType::UseWindowMaterial },
     };
 };
 

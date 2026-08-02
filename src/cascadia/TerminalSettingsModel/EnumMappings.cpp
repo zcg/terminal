@@ -32,6 +32,8 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
     // Global Settings
     DEFINE_ENUM_MAP(winrt::Windows::UI::Xaml::ElementTheme, ElementTheme);
     DEFINE_ENUM_MAP(Model::NewTabPosition, NewTabPosition);
+    DEFINE_ENUM_MAP(Model::TabPosition, TabPosition);
+    DEFINE_ENUM_MAP(Model::BackgroundMaterial, BackgroundMaterial);
     DEFINE_ENUM_MAP(winrt::Microsoft::UI::Xaml::Controls::TabViewWidthMode, TabViewWidthMode);
     DEFINE_ENUM_MAP(Microsoft::Terminal::Control::DefaultInputScope, DefaultInputScope);
     DEFINE_ENUM_MAP(Model::LaunchMode, LaunchMode);
@@ -46,6 +48,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
     DEFINE_ENUM_MAP(Model::ConfirmOnClose, ConfirmOnClose);
 
     // Profile Settings
+    DEFINE_ENUM_MAP(Model::TerminalBackgroundMaterial, TerminalBackgroundMaterial);
     DEFINE_ENUM_MAP(Model::CloseOnExitMode, CloseOnExitMode);
     DEFINE_ENUM_MAP(Microsoft::Terminal::Control::ScrollbarState, ScrollbarState);
     DEFINE_ENUM_MAP(Windows::UI::Xaml::Media::Stretch, BackgroundImageStretchMode);

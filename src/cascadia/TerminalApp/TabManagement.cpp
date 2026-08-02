@@ -101,6 +101,7 @@ namespace winrt::TerminalApp::implementation
     void TerminalPage::_InitializeTab(winrt::com_ptr<Tab> newTabImpl, uint32_t insertPosition)
     {
         newTabImpl->Initialize();
+        newTabImpl->SetVerticalTabActive(_verticalTabActive);
 
         // If insert position is not passed, calculate it
         if (insertPosition == -1)
@@ -205,6 +206,12 @@ namespace winrt::TerminalApp::implementation
         // This kicks off TabView::SelectionChanged, in response to which
         // we'll attach the terminal's Xaml control to the Xaml root.
         _tabView.SelectedItem(tabViewItem);
+        if (_verticalTabActive)
+        {
+            _SyncVerticalTabItems();
+            _tabViewVertical.SelectedItem(newTabImpl->TabViewItemVertical());
+            _UpdatedSelectedTab(*newTabImpl);
+        }
     }
 
     // Method Description:
@@ -245,6 +252,7 @@ namespace winrt::TerminalApp::implementation
     void TerminalPage::_UpdateTabWidthMode()
     {
         _tabView.TabWidthMode(_settings.GlobalSettings().TabWidthMode());
+        _tabViewVertical.TabWidthMode(_settings.GlobalSettings().TabWidthMode());
     }
 
     // Method Description:
@@ -263,8 +271,16 @@ namespace winrt::TerminalApp::implementation
 
         if (_tabView)
         {
-            // collapse/show the tabs themselves
-            _tabView.Visibility(isVisible ? Visibility::Visible : Visibility::Collapsed);
+            // collapse/show the horizontal tabs themselves
+            _tabView.Visibility(!_verticalTabActive && isVisible ? Visibility::Visible : Visibility::Collapsed);
+        }
+        if (_tabViewVertical)
+        {
+            _tabViewVertical.Visibility(_verticalTabActive && isVisible ? Visibility::Visible : Visibility::Collapsed);
+        }
+        if (_tabStripSplitter)
+        {
+            _tabStripSplitter.Visibility(_verticalTabActive && isVisible ? Visibility::Visible : Visibility::Collapsed);
         }
         if (_tabRow)
         {
@@ -299,7 +315,9 @@ namespace winrt::TerminalApp::implementation
             // current control's live settings (which will include changes
             // made through VT).
             uint32_t insertPosition = _tabs.Size();
-            if (_settings.GlobalSettings().NewTabPosition() == NewTabPosition::AfterCurrentTab)
+            const auto newTabPosition = _settings.GlobalSettings().NewTabPosition();
+            if (newTabPosition == NewTabPosition::AfterCurrentTab ||
+                newTabPosition == NewTabPosition::AfterLastTabExceptDuplicate)
             {
                 insertPosition = tab.TabViewIndex() + 1;
             }
@@ -526,8 +544,18 @@ namespace winrt::TerminalApp::implementation
             _stashed.draggedTab = nullptr;
         }
 
+        const auto verticalTabViewItem = winrt::get_self<Tab>(tab)->TabViewItemVertical();
+
         _tabs.RemoveAt(tabIndex);
         _tabView.TabItems().RemoveAt(tabIndex);
+        if (_verticalTabActive)
+        {
+            uint32_t verticalTabIndex{};
+            if (_tabViewVertical.TabItems().IndexOf(verticalTabViewItem, verticalTabIndex))
+            {
+                _tabViewVertical.TabItems().RemoveAt(verticalTabIndex);
+            }
+        }
         _UpdateTabIndices();
 
         // To close the window here, we need to close the hosting window.
@@ -549,6 +577,15 @@ namespace winrt::TerminalApp::implementation
             const auto newSelectedTab = _mruTabs.GetAt(0);
             _UpdatedSelectedTab(newSelectedTab);
             _tabView.SelectedItem(newSelectedTab.TabViewItem());
+            if (_verticalTabActive)
+            {
+                const auto newSelectedTabImpl{ winrt::get_self<Tab>(newSelectedTab) };
+                _tabViewVertical.SelectedItem(newSelectedTabImpl->TabViewItemVertical());
+            }
+        }
+        else if (_verticalTabActive && _tabs.Size() > 0)
+        {
+            _UpdateVerticalTabSelection();
         }
 
         // GH#5559 - If we were in the middle of a drag/drop, end it by clearing
@@ -612,6 +649,11 @@ namespace winrt::TerminalApp::implementation
         // tab movement is done as part of multiple actions following calls
         // to _GetFocusedTab will return the correct tab.
         _tabView.SelectedItem(tab.TabViewItem());
+        if (_verticalTabActive)
+        {
+            const auto tabImpl{ winrt::get_self<Tab>(tab) };
+            _tabViewVertical.SelectedItem(tabImpl->TabViewItemVertical());
+        }
 
         if (_startupState == StartupState::InStartup)
         {
@@ -702,12 +744,21 @@ namespace winrt::TerminalApp::implementation
     //   so make sure to check the result!
     winrt::TerminalApp::Tab TerminalPage::_GetTabByTabViewItem(const IInspectable& tabViewItem) const noexcept
     {
+        // Check the horizontal TabView first
         uint32_t tabIndexFromControl{};
         const auto items{ _tabView.TabItems() };
         if (items.IndexOf(tabViewItem, tabIndexFromControl) && tabIndexFromControl < _tabs.Size())
         {
-            // If IndexOf returns true, we've actually got an index
             return _tabs.GetAt(tabIndexFromControl);
+        }
+        // If not found in the horizontal TabView, check _tabs for TabViewItemVertical
+        for (const auto& tab : _tabs)
+        {
+            auto tabImpl{ winrt::get_self<Tab>(tab) };
+            if (tabImpl->TabViewItemVertical() == tabViewItem)
+            {
+                return tab;
+            }
         }
         return nullptr;
     }
@@ -740,6 +791,11 @@ namespace winrt::TerminalApp::implementation
             if (_tabs.IndexOf(tab, tabIndex))
             {
                 _tabView.SelectedItem(tab.TabViewItem());
+                if (_verticalTabActive)
+                {
+                    const auto tabImpl{ winrt::get_self<Tab>(tab) };
+                    _tabViewVertical.SelectedItem(tabImpl->TabViewItemVertical());
+                }
             }
         }
     }
@@ -1011,6 +1067,12 @@ namespace winrt::TerminalApp::implementation
             p.Visibility(Visibility::Collapsed);
         }
         _UpdateTabView();
+        // If vertical TabView is active, keep it in sync
+        if (_verticalTabActive)
+        {
+            _SyncVerticalTabItems();
+            _UpdateVerticalTabSelection();
+        }
     }
 
     void TerminalPage::_OnTabPointerPressed(const IInspectable& sender, const Windows::UI::Xaml::Input::PointerRoutedEventArgs& e)
@@ -1115,6 +1177,13 @@ namespace winrt::TerminalApp::implementation
             }
 
             tab.TabViewItem().StartBringIntoView();
+            if (_verticalTabActive)
+            {
+                if (const auto tabImpl = _GetTabImpl(tab))
+                {
+                    tabImpl->TabViewItemVertical().StartBringIntoView();
+                }
+            }
 
             // Raise an event that our title changed
             TitleChanged.raise(*this, nullptr);
@@ -1156,6 +1225,15 @@ namespace winrt::TerminalApp::implementation
             if (selectedIndex >= 0 && selectedIndex < gsl::narrow_cast<int32_t>(_tabs.Size()))
             {
                 const auto tab{ _tabs.GetAt(selectedIndex) };
+                if (sender == _tabViewVertical)
+                {
+                    _tabView.SelectedItem(tab.TabViewItem());
+                }
+                else if (_verticalTabActive)
+                {
+                    const auto tabImpl{ winrt::get_self<Tab>(tab) };
+                    _tabViewVertical.SelectedItem(tabImpl->TabViewItemVertical());
+                }
                 _UpdatedSelectedTab(tab);
             }
         }
@@ -1219,6 +1297,15 @@ namespace winrt::TerminalApp::implementation
             _tabView.TabItems().RemoveAt(currentTabIndex);
             _tabView.TabItems().InsertAt(newTabIndex, tabViewItem);
             _tabView.SelectedItem(tabViewItem);
+
+            if (_tabViewVertical.TabItems().Size() == _tabs.Size())
+            {
+                const auto tabImpl{ winrt::get_self<implementation::Tab>(tab) };
+                const auto verticalTabViewItem{ tabImpl->TabViewItemVertical() };
+                _tabViewVertical.TabItems().RemoveAt(currentTabIndex);
+                _tabViewVertical.TabItems().InsertAt(newTabIndex, verticalTabViewItem);
+                _tabViewVertical.SelectedItem(verticalTabViewItem);
+            }
 
             if (auto autoPeer = Automation::Peers::FrameworkElementAutomationPeer::FromElement(*this))
             {

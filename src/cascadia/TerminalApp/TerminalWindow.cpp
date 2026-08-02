@@ -285,6 +285,11 @@ namespace winrt::TerminalApp::implementation
         return _settings.GlobalSettings().ShowTabsInTitlebar();
     }
 
+    Microsoft::Terminal::Settings::Model::TabPosition TerminalWindow::GetTabPosition()
+    {
+        return _settings.GlobalSettings().TabBarPosition();
+    }
+
     bool TerminalWindow::GetInitialAlwaysOnTop()
     {
         return _settings.GlobalSettings().AlwaysOnTop();
@@ -1008,6 +1013,14 @@ namespace winrt::TerminalApp::implementation
         if (_root)
         {
             _root->WindowActivated(activated);
+        }
+    }
+
+    void TerminalWindow::SystemBackdropType(const int32_t systemBackdropType)
+    {
+        if (_root)
+        {
+            _root->SystemBackdropType(systemBackdropType);
         }
     }
 

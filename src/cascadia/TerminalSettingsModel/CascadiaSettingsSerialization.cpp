@@ -849,13 +849,11 @@ void SettingsLoader::_parse(const OriginTag origin, const winrt::hstring& source
             {
                 const auto& name{ theme->Name() };
 
+                // Fragments and other non-user origins cannot shadow the built-in themes.
                 if (origin != OriginTag::InBox &&
+                    origin != OriginTag::User &&
                     (std::ranges::find(builtinThemes, name) != builtinThemes.end()))
                 {
-                    // If the theme didn't come from the in-box themes, and its
-                    // name was one of the reserved names, then just ignore it.
-                    // Themes don't support layering - we don't want the user
-                    // versions of these themes overriding the built-in ones.
                     continue;
                 }
 
@@ -1709,8 +1707,7 @@ Json::Value CascadiaSettings::ToJson() const
     Json::Value themes{ Json::ValueType::arrayValue };
     for (const auto& entry : _globals->Themes())
     {
-        // Ignore the built in themes, when serializing the themes back out. We
-        // don't want to re-include them in the user settings file.
+        // Ignore the built in themes when serializing. We don't want to re-include them.
         const auto theme{ winrt::get_self<Theme>(entry.Value()) };
         const auto& name{ theme->Name() };
         if (std::ranges::find(builtinThemes, name) != builtinThemes.end())

@@ -102,6 +102,7 @@ namespace TerminalApp
 
         Windows.UI.Xaml.Media.Brush TitlebarBrush { get; };
         void WindowActivated(Boolean activated);
+        void SystemBackdropType(Int32 systemBackdropType);
         void SendContentToOther(RequestReceiveContentArgs args);
 
         event Windows.Foundation.TypedEventHandler<Object, Object> TitleChanged;

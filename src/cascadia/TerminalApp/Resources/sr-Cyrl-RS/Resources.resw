@@ -920,6 +920,12 @@
   <data name="TabMoveRight" xml:space="preserve">
     <value>Помери удесно</value>
   </data>
+  <data name="TabMoveUp" xml:space="preserve">
+    <value>Премести навише</value>
+  </data>
+  <data name="TabMoveDown" xml:space="preserve">
+    <value>Премести наниже</value>
+  </data>
   <data name="InvalidRegex" xml:space="preserve">
     <value>Пронађен је неисправан регуларни израз.</value>
   </data>

@@ -1000,6 +1000,12 @@
   <data name="TabMoveRight" xml:space="preserve">
     <value>Nach rechts</value>
   </data>
+  <data name="TabMoveUp" xml:space="preserve">
+    <value>Nach oben verschieben</value>
+  </data>
+  <data name="TabMoveDown" xml:space="preserve">
+    <value>Nach unten verschieben</value>
+  </data>
   <data name="InvalidRegex" xml:space="preserve">
     <value>Ein ungültiger regulärer Ausdruck wurde entdeckt.</value>
   </data>

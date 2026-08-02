@@ -10,6 +10,9 @@ namespace Microsoft.Terminal.Settings.Model
         // Global Settings
         static Windows.Foundation.Collections.IMap<String, Windows.UI.Xaml.ElementTheme> ElementTheme { get; };
         static Windows.Foundation.Collections.IMap<String, Microsoft.Terminal.Settings.Model.NewTabPosition> NewTabPosition { get; };
+        static Windows.Foundation.Collections.IMap<String, Microsoft.Terminal.Settings.Model.TabPosition> TabPosition { get; };
+        static Windows.Foundation.Collections.IMap<String, Microsoft.Terminal.Settings.Model.BackgroundMaterial> BackgroundMaterial { get; };
+        static Windows.Foundation.Collections.IMap<String, Microsoft.Terminal.Settings.Model.TerminalBackgroundMaterial> TerminalBackgroundMaterial { get; };
         static Windows.Foundation.Collections.IMap<String, Microsoft.UI.Xaml.Controls.TabViewWidthMode> TabViewWidthMode { get; };
         static Windows.Foundation.Collections.IMap<String, Microsoft.Terminal.Control.DefaultInputScope> DefaultInputScope { get; };
         static Windows.Foundation.Collections.IMap<String, Microsoft.Terminal.Settings.Model.FirstWindowPreference> FirstWindowPreference { get; };

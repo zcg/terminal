@@ -31,6 +31,21 @@ static constexpr std::string_view LegacyWarnAboutMultiLinePasteKey{ "multiLinePa
 static constexpr std::string_view LegacyConfirmCloseAllTabsKey{ "confirmCloseAllTabs" };
 static constexpr std::string_view LegacyPersistedWindowLayout{ "persistedWindowLayout" };
 
+static constexpr std::wstring_view systemThemeName{ L"system" };
+static constexpr std::wstring_view lightThemeName{ L"light" };
+static constexpr std::wstring_view darkThemeName{ L"dark" };
+static constexpr std::wstring_view legacySystemThemeName{ L"legacySystem" };
+static constexpr std::wstring_view legacyLightThemeName{ L"legacyLight" };
+static constexpr std::wstring_view legacyDarkThemeName{ L"legacyDark" };
+static constexpr std::array builtinThemes{
+    systemThemeName,
+    lightThemeName,
+    darkThemeName,
+    legacySystemThemeName,
+    legacyLightThemeName,
+    legacyDarkThemeName,
+};
+
 // Method Description:
 // - Copies any extraneous data from the parent before completing a CreateChild call
 // Arguments:

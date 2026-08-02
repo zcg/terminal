@@ -118,6 +118,8 @@ namespace Microsoft.Terminal.Control
         UInt16 FontWeight { get; };
         Single Opacity { get; };
         Boolean UseAcrylic { get; };
+        Boolean UseWindowBackgroundMaterial { get; };
+        void WindowBackgroundMaterialAvailable(Boolean available);
 
         Boolean TryMarkModeKeybinding(Int16 vkey,
                                       Microsoft.Terminal.Core.ControlKeyStates modifiers);

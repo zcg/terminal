@@ -979,6 +979,12 @@
   <data name="TabMoveRight" xml:space="preserve">
     <value>Перемістити праворуч</value>
   </data>
+  <data name="TabMoveUp" xml:space="preserve">
+    <value>Перемістити вверх</value>
+  </data>
+  <data name="TabMoveDown" xml:space="preserve">
+    <value>Перемістити вниз</value>
+  </data>
   <data name="InvalidRegex" xml:space="preserve">
     <value>Знайдено недійсний регулярний вираз.</value>
   </data>

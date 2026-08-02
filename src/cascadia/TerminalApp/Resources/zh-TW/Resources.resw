@@ -997,6 +997,12 @@
   <data name="TabMoveRight" xml:space="preserve">
     <value>右移</value>
   </data>
+  <data name="TabMoveUp" xml:space="preserve">
+    <value>上移</value>
+  </data>
+  <data name="TabMoveDown" xml:space="preserve">
+    <value>下移</value>
+  </data>
   <data name="InvalidRegex" xml:space="preserve">
     <value>發現無效的規則運算式。</value>
   </data>

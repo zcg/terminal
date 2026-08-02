@@ -70,7 +70,7 @@ public:
     void RemoveFromSystemMenu(const winrt::hstring& itemLabel);
 
     void UseDarkTheme(const bool v);
-    virtual void UseMica(const bool newValue, const double titlebarOpacity);
+    virtual int SetSystemBackdrop(const int systemBackdropType, const double titlebarOpacity);
 
     til::event<winrt::delegate<>> DragRegionClicked;
     til::event<winrt::delegate<>> WindowCloseButtonClicked;
@@ -110,6 +110,7 @@ protected:
     bool _borderless{ false };
     bool _alwaysOnTop{ false };
     bool _fullscreen{ false };
+    std::optional<int> _systemBackdropType{};
     bool _showTabsFullscreen{ false };
     bool _fWasMaximizedBeforeFullscreen{ false };
     RECT _rcWindowBeforeFullscreen{};

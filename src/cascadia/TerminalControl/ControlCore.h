@@ -267,6 +267,8 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         RUNTIME_SETTING(float, Opacity, _settings.Opacity());
         RUNTIME_SETTING(float, FocusedOpacity, FocusedAppearance().Opacity());
         RUNTIME_SETTING(bool, UseAcrylic, _settings.UseAcrylic());
+        bool UseWindowBackgroundMaterial() const noexcept;
+        void WindowBackgroundMaterialAvailable(bool available);
 
         // -------------------------------- WinRT Events ---------------------------------
         // clang-format off
@@ -404,6 +406,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         float _compositionScale{ 0 };
         uint8_t _renderFailures{ 0 };
         bool _forceCursorVisible = false;
+        bool _windowBackgroundMaterialAvailable = false;
 
         // Audio stuff.
         MidiAudio _midiAudio;

@@ -648,6 +648,32 @@ namespace winrt::TerminalApp::implementation
         args.Handled(true);
     }
 
+    void TerminalPage::_HandleToggleVerticalTabs(const IInspectable& /*sender*/,
+                                                 const ActionEventArgs& args)
+    {
+        const auto globals = _settings.GlobalSettings();
+        const auto next = (globals.TabBarPosition() == TabPosition::Top)
+                              ? TabPosition::Left
+                              : TabPosition::Top;
+        globals.TabBarPosition(next);
+
+        // Defer layout changes to avoid re-entering the message loop while
+        // processing the keyboard event, which can crash when SetTitleBarContent
+        // triggers SetWindowPos(SWP_FRAMECHANGED).
+        if (const auto queue = winrt::Windows::System::DispatcherQueue::GetForCurrentThread())
+        {
+            queue.TryEnqueue(winrt::Windows::System::DispatcherQueuePriority::Low, [weakThis{ get_weak() }]() {
+                if (auto page{ weakThis.get() })
+                {
+                    page->_ApplyTabPosition();
+                    page->_updateThemeColors();
+                }
+            });
+        }
+
+        args.Handled(true);
+    }
+
     void TerminalPage::_HandleToggleCommandPalette(const IInspectable& /*sender*/,
                                                    const ActionEventArgs& args)
     {

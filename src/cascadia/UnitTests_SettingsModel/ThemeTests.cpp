@@ -6,12 +6,14 @@
 #include "../TerminalSettingsModel/Theme.h"
 #include "../TerminalSettingsModel/CascadiaSettings.h"
 #include "../TerminalSettingsModel/resource.h"
+#include "../inc/MaterialHelpers.h"
 #include "../types/inc/colorTable.hpp"
 #include "JsonTestClass.h"
 
 using namespace Microsoft::Console;
 using namespace winrt::Microsoft::Terminal;
 using namespace winrt::Microsoft::Terminal::Settings::Model::implementation;
+using namespace Microsoft::Terminal::MaterialHelpers;
 using namespace WEX::Logging;
 using namespace WEX::TestExecution;
 using namespace WEX::Common;
@@ -28,6 +30,7 @@ namespace SettingsModelUnitTests
         TEST_METHOD(ParseNullWindowTheme);
         TEST_METHOD(ParseThemeWithNullThemeColor);
         TEST_METHOD(InvalidCurrentTheme);
+        TEST_METHOD(ApplicationBackgroundMaterialPolicy);
 
         static Core::Color rgb(uint8_t r, uint8_t g, uint8_t b) noexcept
         {
@@ -69,6 +72,39 @@ namespace SettingsModelUnitTests
         VERIFY_IS_NOT_NULL(theme->Window());
         VERIFY_ARE_EQUAL(winrt::Windows::UI::Xaml::ElementTheme::Light, theme->Window().RequestedTheme());
         VERIFY_ARE_EQUAL(true, theme->Window().UseMica());
+    }
+
+    void ThemeTests::ApplicationBackgroundMaterialPolicy()
+    {
+        static constexpr std::string_view micaThemeJson{ R"({
+            "name": "mica",
+            "window": { "useMica": true }
+        })" };
+        static constexpr std::string_view solidThemeJson{ R"({
+            "name": "solid",
+            "window": { "useMica": false }
+        })" };
+
+        const auto micaTheme = Theme::FromJson(VerifyParseSucceeded(micaThemeJson));
+        const auto solidTheme = Theme::FromJson(VerifyParseSucceeded(solidThemeJson));
+
+        VERIFY_ARE_EQUAL(Settings::Model::BackgroundMaterial::Mica,
+                         ResolveApplicationBackgroundMaterial(*micaTheme, Settings::Model::BackgroundMaterial::Default));
+        VERIFY_ARE_EQUAL(Settings::Model::BackgroundMaterial::Solid,
+                         ResolveApplicationBackgroundMaterial(*solidTheme, Settings::Model::BackgroundMaterial::Default));
+        VERIFY_ARE_EQUAL(Settings::Model::BackgroundMaterial::Solid,
+                         ResolveApplicationBackgroundMaterial(*micaTheme, Settings::Model::BackgroundMaterial::Solid));
+
+        VERIFY_ARE_EQUAL(DWMSBT_MAINWINDOW, SystemBackdropForMaterial(Settings::Model::BackgroundMaterial::Mica));
+        VERIFY_ARE_EQUAL(DWMSBT_TABBEDWINDOW, SystemBackdropForMaterial(Settings::Model::BackgroundMaterial::MicaAlt));
+        VERIFY_ARE_EQUAL(DWMSBT_TRANSIENTWINDOW, SystemBackdropForMaterial(Settings::Model::BackgroundMaterial::Acrylic));
+        VERIFY_ARE_EQUAL(DWMSBT_NONE, SystemBackdropForMaterial(Settings::Model::BackgroundMaterial::Solid));
+
+        VERIFY_IS_TRUE(ShouldUseWindowMaterialInTabRow(Settings::Model::BackgroundMaterial::Acrylic, true));
+        VERIFY_IS_FALSE(ShouldUseXamlAcrylicInTabRow(Settings::Model::BackgroundMaterial::Acrylic, false, true, true));
+        VERIFY_IS_TRUE(ShouldUseXamlAcrylicInTabRow(Settings::Model::BackgroundMaterial::Acrylic, false, false, true));
+        VERIFY_IS_FALSE(ShouldUseXamlAcrylicInTabRow(Settings::Model::BackgroundMaterial::Acrylic, false, false, false));
+
     }
 
     void ThemeTests::ParseEmptyTheme()
