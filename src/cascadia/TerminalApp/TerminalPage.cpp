@@ -5786,6 +5786,9 @@ namespace winrt::TerminalApp::implementation
                     tabRowSource = Media::AcrylicBackgroundSource::Backdrop;
                 }
             }
+            // Note: the brush is only rebuilt when the source or tint changed
+            // (see needsNewBrush below), which avoids the acrylic flicker that
+            // recreating it on every BackgroundBrush event would cause.
 
             const auto needsNewBrush = !_tabRowAcrylicBrush ||
                                        _tabRowAcrylicBrush.BackgroundSource() != tabRowSource ||
