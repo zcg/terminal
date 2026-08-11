@@ -464,16 +464,12 @@ void AtlasEngine::_present()
         .bottom = std::min<LONG>(_p.dirtyRectInPx.bottom, fullRect.bottom),
     };
 
-    // Transparent swapchains are alpha-composited by DWM over the window backdrop,
-    // which doesn't reliably honor the Present1 dirty-rect optimization: stale
-    // glyph pixels can linger at their old positions (ghosting) while freshly
-    // scrolled-in glyphs never show up. Always present the full frame for these
-    // targets. (Opaque targets already redraw the full viewport while scrolling -
-    // see StartPaint() - so their dirty rect covers the whole viewport there too.)
-    if (_p.s->target->useAlpha)
-    {
-        dirtyRect = fullRect;
-    }
+    // Partial invalidation + the Present1 dirty-rect optimization are not reliable
+    // for all output (see StartPaint()): stale glyph pixels can linger at their
+    // old positions (residual characters) while changed areas never get redrawn.
+    // Always present the full frame instead of handing DWM a partial dirty rect,
+    // for both transparent and opaque targets.
+    dirtyRect = fullRect;
 
     // Present1() dislikes being called with an empty dirty rect.
     if (dirtyRect.left >= dirtyRect.right || dirtyRect.top >= dirtyRect.bottom)

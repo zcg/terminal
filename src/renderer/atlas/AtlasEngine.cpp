@@ -82,18 +82,15 @@ try
         _api.scrollOffset = 0;
     }
 
-    // The Present1 scroll optimization is unreliable: DWM moves the old pixels and
-    // only the newly scrolled-in rows get redrawn, which can leave stale glyphs at
-    // their old positions (residual characters after a scroll). This happens for
-    // transparent swapchains (alpha-composited by DWM) and opaque ones alike.
-    // Transparent targets always fall back to full redraws; opaque targets only do
-    // so while scrolling, where the full-redraw cost is paid anyway. Non-scroll
-    // redraws keep the cheap partial-invalidation path.
-    if (_p.s->target->useAlpha || _api.scrollOffset != 0)
-    {
-        _api.invalidatedRows = invalidatedRowsAll;
-        _api.scrollOffset = 0;
-    }
+    // Partial invalidation + the Present1 scroll/dirty-rect optimization are not
+    // reliable for all output: some VT sequences (carriage returns, line clears,
+    // cursor-addressed rewrites, scrolls) end up not invalidating every affected
+    // row, which leaves stale glyph pixels at their old positions (residual
+    // characters) until something forces a full redraw. This affects transparent
+    // swapchains (alpha-composited by DWM) and opaque ones alike. Fall back to
+    // full redraws + full presents for all targets, like the debug flag above.
+    _api.invalidatedRows = invalidatedRowsAll;
+    _api.scrollOffset = 0;
 
     // Clamp invalidation rects into valid value ranges.
     {
