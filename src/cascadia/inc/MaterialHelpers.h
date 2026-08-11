@@ -26,7 +26,7 @@ namespace Microsoft::Terminal::MaterialHelpers
         }
 
         const auto windowTheme = currentTheme.Window();
-        return windowTheme && windowTheme.UseMica() ? BackgroundMaterial::Mica : BackgroundMaterial::Solid;
+        return windowTheme && windowTheme.UseMica() != winrt::Microsoft::Terminal::Settings::Model::MicaStyle::None ? BackgroundMaterial::Mica : BackgroundMaterial::Solid;
     }
 
     [[nodiscard]] constexpr bool IsWindowBackedApplicationMaterial(const BackgroundMaterial material) noexcept
