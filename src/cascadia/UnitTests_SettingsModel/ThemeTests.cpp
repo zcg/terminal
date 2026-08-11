@@ -25,6 +25,7 @@ namespace SettingsModelUnitTests
         TEST_CLASS(ThemeTests);
 
         TEST_METHOD(ParseSimpleTheme);
+        TEST_METHOD(ParseMicaStyle);
         TEST_METHOD(ParseEmptyTheme);
         TEST_METHOD(ParseNoWindowTheme);
         TEST_METHOD(ParseNullWindowTheme);
