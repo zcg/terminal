@@ -199,6 +199,7 @@ colorspaces
 colorspec
 colortable
 colortbl
+COLORTERM
 colortest
 colortool
 COLORVALUE
@@ -1705,6 +1706,7 @@ Trd
 triaged
 triaging
 TRIMZEROHEADINGS
+truecolor
 trx
 tsa
 tsgr
