@@ -82,12 +82,14 @@ try
         _api.scrollOffset = 0;
     }
 
-    // Transparent swapchains are alpha-composited by DWM over the window backdrop, which
-    // doesn't reliably honor the Present1 scroll/dirty-rect optimization: glyph pixels can
-    // linger at their old positions (ghosting) while freshly scrolled-in glyphs never show
-    // up. Fall back to full redraws + full presents for these targets, like the debug flag
-    // above.
-    if (_p.s->target->useAlpha)
+    // The Present1 scroll optimization is unreliable: DWM moves the old pixels and
+    // only the newly scrolled-in rows get redrawn, which can leave stale glyphs at
+    // their old positions (residual characters after a scroll). This happens for
+    // transparent swapchains (alpha-composited by DWM) and opaque ones alike.
+    // Transparent targets always fall back to full redraws; opaque targets only do
+    // so while scrolling, where the full-redraw cost is paid anyway. Non-scroll
+    // redraws keep the cheap partial-invalidation path.
+    if (_p.s->target->useAlpha || _api.scrollOffset != 0)
     {
         _api.invalidatedRows = invalidatedRowsAll;
         _api.scrollOffset = 0;

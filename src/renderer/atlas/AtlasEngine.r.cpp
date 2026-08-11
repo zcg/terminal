@@ -468,7 +468,8 @@ void AtlasEngine::_present()
     // which doesn't reliably honor the Present1 dirty-rect optimization: stale
     // glyph pixels can linger at their old positions (ghosting) while freshly
     // scrolled-in glyphs never show up. Always present the full frame for these
-    // targets instead of handing DWM a partial dirty rect.
+    // targets. (Opaque targets already redraw the full viewport while scrolling -
+    // see StartPaint() - so their dirty rect covers the whole viewport there too.)
     if (_p.s->target->useAlpha)
     {
         dirtyRect = fullRect;
