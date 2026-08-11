@@ -687,18 +687,6 @@ constexpr int ucdToCharacterWidth(const int val) noexcept
 }
 // clang-format on
 
-// Private Use Area codepoints (U+E000..U+F8FF, U+F0000..U+FFFFD, U+100000..U+10FFFD)
-// are used by icon fonts such as Nerd Font. The Unicode database marks them as
-// "ambiguous", but icon fonts and applications practically always render them as
-// narrow (1 cell). Without this override, `compatibility.ambiguousWidth: wide`
-// would count every PUA icon as 2 cells, which disagrees with the width the font
-// (and the connected app, via wcwidth) assumes - causing misaligned glyphs and
-// input lines that wrap one character early.
-constexpr bool isPrivateUseArea(const char32_t cp) noexcept
-{
-    return (cp >= 0xE000 && cp <= 0xF8FF) || (cp >= 0xF0000 && cp <= 0xFFFFD) || (cp >= 0x100000 && cp <= 0x10FFFD);
-}
-
 // Decodes the next codepoint from the given UTF-16 string.
 // Returns the start of the next codepoint. Assumes `it < end`.
 [[msvc::forceinline]] constexpr const wchar_t* utf16NextOrFFFD(const wchar_t* it, const wchar_t* end, char32_t& out)
@@ -856,9 +844,7 @@ bool CodepointWidthDetector::_graphemeNext(GraphemeState& s, const std::wstring_
                 auto w = ucdToCharacterWidth(lead);
                 if (w == 3)
                 {
-                    // PUA codepoints are only ambiguous in the Unicode database;
-                    // icon fonts and applications treat them as narrow.
-                    w = isPrivateUseArea(cp) ? 1 : _ambiguousWidth;
+                    w = _ambiguousWidth;
                 }
 
                 // U+FE0F Variation Selector-16 is used to turn unqualified Emojis into qualified ones.
@@ -955,9 +941,7 @@ bool CodepointWidthDetector::_graphemePrev(GraphemeState& s, const std::wstring_
                 auto w = ucdToCharacterWidth(trail);
                 if (w == 3)
                 {
-                    // PUA codepoints are only ambiguous in the Unicode database;
-                    // icon fonts and applications treat them as narrow.
-                    w = isPrivateUseArea(cp) ? 1 : _ambiguousWidth;
+                    w = _ambiguousWidth;
                 }
 
                 // U+FE0F Variation Selector-16 is used to turn unqualified Emojis into qualified ones.
@@ -1049,9 +1033,7 @@ bool CodepointWidthDetector::_graphemeNextWcswidth(GraphemeState& s, const std::
         auto w = ucdToCharacterWidth(val);
         if (w == 3)
         {
-            // PUA codepoints are only ambiguous in the Unicode database;
-            // icon fonts and applications treat them as narrow.
-            w = isPrivateUseArea(cp) ? 1 : _ambiguousWidth;
+            w = _ambiguousWidth;
         }
 
         if (state != 0 && w != 0)
@@ -1116,9 +1098,7 @@ bool CodepointWidthDetector::_graphemePrevWcswidth(GraphemeState& s, const std::
             auto w = ucdToCharacterWidth(val);
             if (w == 3)
             {
-                // PUA codepoints are only ambiguous in the Unicode database;
-                // icon fonts and applications treat them as narrow.
-                w = isPrivateUseArea(cp) ? 1 : _ambiguousWidth;
+                w = _ambiguousWidth;
             }
 
             width += w;
@@ -1174,9 +1154,7 @@ bool CodepointWidthDetector::_graphemeNextConsole(GraphemeState& s, const std::w
         width = ucdToCharacterWidth(val);
         if (width == 3)
         {
-            // PUA codepoints are only ambiguous in the Unicode database;
-            // icon fonts and applications treat them as narrow.
-            width = isPrivateUseArea(cp) ? 1 : _checkFallbackViaCache(cp);
+            width = _checkFallbackViaCache(cp);
         }
 
         delayedCompletion = clusterEnd >= end;
@@ -1222,9 +1200,7 @@ bool CodepointWidthDetector::_graphemePrevConsole(GraphemeState& s, const std::w
         width = ucdToCharacterWidth(val);
         if (width == 3)
         {
-            // PUA codepoints are only ambiguous in the Unicode database;
-            // icon fonts and applications treat them as narrow.
-            width = isPrivateUseArea(cp) ? 1 : _checkFallbackViaCache(cp);
+            width = _checkFallbackViaCache(cp);
         }
 
         delayedCompletion = clusterBeg <= beg;

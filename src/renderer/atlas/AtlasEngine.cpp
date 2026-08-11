@@ -82,15 +82,16 @@ try
         _api.scrollOffset = 0;
     }
 
-    // Partial invalidation + the Present1 scroll/dirty-rect optimization are not
-    // reliable for all output: some VT sequences (carriage returns, line clears,
-    // cursor-addressed rewrites, scrolls) end up not invalidating every affected
-    // row, which leaves stale glyph pixels at their old positions (residual
-    // characters) until something forces a full redraw. This affects transparent
-    // swapchains (alpha-composited by DWM) and opaque ones alike. Fall back to
-    // full redraws + full presents for all targets, like the debug flag above.
-    _api.invalidatedRows = invalidatedRowsAll;
-    _api.scrollOffset = 0;
+    // Transparent swapchains are alpha-composited by DWM over the window backdrop, which
+    // doesn't reliably honor the Present1 scroll/dirty-rect optimization: glyph pixels can
+    // linger at their old positions (ghosting) while freshly scrolled-in glyphs never show
+    // up. Fall back to full redraws + full presents for these targets, like the debug flag
+    // above.
+    if (_p.s->target->useAlpha)
+    {
+        _api.invalidatedRows = invalidatedRowsAll;
+        _api.scrollOffset = 0;
+    }
 
     // Clamp invalidation rects into valid value ranges.
     {
