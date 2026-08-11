@@ -221,6 +221,20 @@ void BackendD3D::Render(RenderingPayload& p)
     // After a Present() the render target becomes unbound.
     p.deviceContext->OMSetRenderTargets(1, _customRenderTargetView ? _customRenderTargetView.addressof() : _renderTargetView.addressof(), nullptr);
 
+    // Transparent swapchains are alpha-composited by DWM, so their back-buffer
+    // contents must never leak into the next frame. Flip-model back buffers are
+    // recycled between frames and are NOT cleared; the premultiplied-alpha
+    // background quad leaves the destination untouched wherever the source is
+    // transparent (src alpha == 0 => out == dst). Without an explicit clear,
+    // stale glyph pixels from an earlier frame linger on the composited result
+    // as ghosting until the swapchain is recreated (e.g. by a resize). Clear the
+    // target once per frame so nothing from a previous frame can survive.
+    if (p.s->target->useAlpha)
+    {
+        static constexpr f32 clearColor[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
+        p.deviceContext->ClearRenderTargetView(_customRenderTargetView ? _customRenderTargetView.get() : _renderTargetView.get(), clearColor);
+    }
+
     // Invalidating the render target helps with spotting invalid quad instances and Present1() bugs.
 #if ATLAS_DEBUG_SHOW_DIRTY || ATLAS_DEBUG_DUMP_RENDER_TARGET
     {
