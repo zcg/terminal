@@ -651,11 +651,11 @@ namespace winrt::TerminalApp::implementation
     void TerminalPage::_HandleToggleVerticalTabs(const IInspectable& /*sender*/,
                                                  const ActionEventArgs& args)
     {
-        const auto globals = _settings.GlobalSettings();
-        const auto next = (globals.TabBarPosition() == TabPosition::Top)
+        const auto windowSettings = _currentWindowSettings();
+        const auto next = (windowSettings.TabBarPosition() == TabPosition::Top)
                               ? TabPosition::Left
                               : TabPosition::Top;
-        globals.TabBarPosition(next);
+        windowSettings.TabBarPosition(next);
 
         // Defer layout changes to avoid re-entering the message loop while
         // processing the keyboard event, which can crash when SetTitleBarContent

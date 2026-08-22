@@ -53,14 +53,14 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
     winrt::Windows::Foundation::IInspectable GlobalAppearanceViewModel::CurrentApplicationBackgroundMaterial()
     {
-        return box_value<Editor::EnumEntry>(_ApplicationBackgroundMaterialMap.Lookup(_GlobalSettings.ApplicationBackgroundMaterial()));
+        return box_value<Editor::EnumEntry>(_ApplicationBackgroundMaterialMap.Lookup(_WindowSettings.ApplicationBackgroundMaterial()));
     }
 
     void GlobalAppearanceViewModel::CurrentApplicationBackgroundMaterial(const winrt::Windows::Foundation::IInspectable& enumEntry)
     {
         if (const auto ee = enumEntry.try_as<Editor::EnumEntry>())
         {
-            _GlobalSettings.ApplicationBackgroundMaterial(unbox_value<Model::BackgroundMaterial>(ee.EnumValue()));
+            _WindowSettings.ApplicationBackgroundMaterial(unbox_value<Model::BackgroundMaterial>(ee.EnumValue()));
         }
     }
 

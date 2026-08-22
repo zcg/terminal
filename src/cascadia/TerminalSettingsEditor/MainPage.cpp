@@ -1187,7 +1187,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
         const auto effectiveBackground{ ResolveApplicationBackgroundMaterial(
             theme,
-            _settingsSource.GlobalSettings().ApplicationBackgroundMaterial()) };
+            _windowSettingsSource.ApplicationBackgroundMaterial()) };
         const auto requiredBackdropType{ SystemBackdropForMaterial(effectiveBackground) };
         const bool useWindowMaterial = canUseWindowMaterial && requiredBackdropType == currentBackdropType;
 
@@ -1216,7 +1216,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
                 _settingsAcrylicBrush.TintOpacity(AcrylicDefaultTintOpacity);
 
                 const auto backdropStyle =
-                    _settingsSource.GlobalSettings().EnableUnfocusedAcrylic() ?
+                    _windowSettingsSource.EnableUnfocusedAcrylic() ?
                         winrt::WUX::Media::AcrylicBackgroundSource::Backdrop :
                         winrt::WUX::Media::AcrylicBackgroundSource::HostBackdrop;
 

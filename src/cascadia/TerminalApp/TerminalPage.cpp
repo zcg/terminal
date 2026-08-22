@@ -345,7 +345,7 @@ namespace winrt::TerminalApp::implementation
     // elevated or a different user - GH#15689) and the user hasn't disabled it.
     bool TerminalPage::_tabDragDropEnabled() const
     {
-        return CanDragDrop() && _settings.GlobalSettings().EnableTabDragDrop();
+        return CanDragDrop() && _currentWindowSettings().EnableTabDragDrop();
     }
 
     void TerminalPage::Create()
@@ -522,8 +522,8 @@ namespace winrt::TerminalApp::implementation
     // - Can be called multiple times. On re-entry it first tears down any
     void TerminalPage::_ApplyTabPosition()
     {
-        const auto newPos = _settings.GlobalSettings().TabBarPosition();
-        const auto newShowTabsInTitlebar = _settings.GlobalSettings().ShowTabsInTitlebar();
+        const auto newPos = _currentWindowSettings().TabBarPosition();
+        const auto newShowTabsInTitlebar = _currentWindowSettings().ShowTabsInTitlebar();
 
         if (_tabPositionApplied &&
             _tabPosition == newPos &&
@@ -4965,7 +4965,7 @@ namespace winrt::TerminalApp::implementation
         // returns to us the dark theme brushes. There's gotta be a way to get
         // the right brushes...
         // See also GH#5741
-        const auto requestedTheme = _settings.GlobalSettings().CurrentTheme().RequestedTheme();
+        const auto requestedTheme = _settings.GlobalSettings().CurrentTheme(_currentWindowSettings()).RequestedTheme();
 
         if (res.HasKey(defaultBackgroundKey))
         {
@@ -5150,8 +5150,8 @@ namespace winrt::TerminalApp::implementation
                 queue.TryEnqueue(winrt::Windows::System::DispatcherQueuePriority::Low, [weakThis, savedSettings]() {
                     if (auto page{ weakThis.get() })
                     {
-                        const auto oldPos = page->_settings.GlobalSettings().TabBarPosition();
-                        const auto newPos = savedSettings.GlobalSettings().TabBarPosition();
+                        const auto oldPos = page->_currentWindowSettings().TabBarPosition();
+                        const auto newPos = savedSettings.WindowSettingsDefaults().TabBarPosition();
 
                         page->SetSettings(savedSettings, false);
 
@@ -5750,15 +5750,15 @@ namespace winrt::TerminalApp::implementation
 
         const auto applicationMaterial{ ResolveApplicationBackgroundMaterial(
             theme,
-            _settings.GlobalSettings().ApplicationBackgroundMaterial()) };
+            _currentWindowSettings().ApplicationBackgroundMaterial()) };
         const auto requiredSystemBackdrop = SystemBackdropForMaterial(applicationMaterial);
         const auto windowMaterialAvailable = requiredSystemBackdrop != DWMSBT_NONE &&
                                              _systemBackdropType == requiredSystemBackdrop;
-        const auto acrylicAllowedWhenUnfocused = _activated || _settings.GlobalSettings().EnableUnfocusedAcrylic();
+        const auto acrylicAllowedWhenUnfocused = _activated || _currentWindowSettings().EnableUnfocusedAcrylic();
         // Honor legacy useAcrylicInTabRow when not already drawing over DWM chrome.
         const auto useWindowMaterialInTabRow = ShouldUseWindowMaterialInTabRow(applicationMaterial, windowMaterialAvailable);
         const auto useAcrylicInTabRow = ShouldUseXamlAcrylicInTabRow(applicationMaterial,
-                                                                     _settings.GlobalSettings().UseAcrylicInTabRow(),
+                                                                     _currentWindowSettings().UseAcrylicInTabRow(),
                                                                      windowMaterialAvailable,
                                                                      acrylicAllowedWhenUnfocused);
 

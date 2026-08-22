@@ -287,7 +287,7 @@ namespace winrt::TerminalApp::implementation
 
     Microsoft::Terminal::Settings::Model::TabPosition TerminalWindow::GetTabPosition()
     {
-        return _settings.GlobalSettings().TabBarPosition();
+        return _currentWindowSettings().TabBarPosition();
     }
 
     bool TerminalWindow::GetInitialAlwaysOnTop()
