@@ -565,6 +565,18 @@
     <value>停用時，標題列會是 [Windows 終端機]。</value>
     <comment>A description for what the "show title in titlebar" setting does. Presented near "Globals_ShowTitleInTitlebar.Header".{Locked="Windows"}</comment>
   </data>
+  <data name="Globals_EnableTabDragDrop.Header" xml:space="preserve">
+    <value>透過拖曳重新排列或拖出索引標籤</value>
+    <comment>Header for a control to toggle whether tabs can be dragged to reorder them or tear them out into a new window.</comment>
+  </data>
+  <data name="Globals_EnableTabDragDrop.HelpText" xml:space="preserve">
+    <value>停用後，仍可透過「移動索引標籤」動作移動索引標籤。</value>
+    <comment>A description for what the "reorder and tear out tabs by dragging" setting does. Presented near "Globals_EnableTabDragDrop.Header".</comment>
+  </data>
+  <data name="Globals_EnableTabDragDrop_Unavailable" xml:space="preserve">
+    <value>由於終端機正以系統管理員身分或其他使用者身分執行（此時拖曳索引標籤會導致視窗當機），因此無法拖曳索引標籤。請改用「移動索引標籤」動作。</value>
+    <comment>Shown in place of the help text when the "reorder and tear out tabs by dragging" setting is disabled because the operating system would not allow tab dragging in this session.</comment>
+  </data>
   <data name="Globals_SnapToGridOnResize.Header" xml:space="preserve">
     <value>將視窗大小調整為字元格線</value>
     <comment>Header for a control to toggle whether the terminal snaps the window to the character grid when resizing, or not.</comment>
@@ -1125,25 +1137,9 @@
     <value>可變字型軸</value>
     <comment>Header for a control to allow editing the font axes.</comment>
   </data>
-  <data name="Profile_FontAxesAvailable.Text" xml:space="preserve">
-    <value>新增或移除指定字型的字型軸。</value>
-    <comment>A description for what the "font axes" setting does. Presented near "Profile_FontAxes".</comment>
-  </data>
-  <data name="Profile_FontAxesUnavailable.Text" xml:space="preserve">
-    <value>選取的字型沒有變數字型軸。</value>
-    <comment>A description provided when the font axes setting is disabled. Presented near "Profile_FontAxes".</comment>
-  </data>
   <data name="Profile_FontFeatures.Header" xml:space="preserve">
     <value>字型功能</value>
     <comment>Header for a control to allow editing the font features.</comment>
-  </data>
-  <data name="Profile_FontFeaturesAvailable.Text" xml:space="preserve">
-    <value>新增或移除指定字型的字型功能。</value>
-    <comment>A description for what the "font features" setting does. Presented near "Profile_FontFeatures".</comment>
-  </data>
-  <data name="Profile_FontFeaturesUnavailable.Text" xml:space="preserve">
-    <value>選取的字型沒有字型功能。</value>
-    <comment>A description provided when the font features setting is disabled. Presented near "Profile_FontFeatures".</comment>
   </data>
   <data name="Profile_Hidden.Header" xml:space="preserve">
     <value>在下拉式清單中隱藏設定檔</value>
@@ -1849,17 +1845,9 @@
     <value>將終端機最小化時，隱藏通知區域中的終端機</value>
     <comment>Header for a control to toggle whether the terminal should hide itself in the notification area instead of the taskbar when minimized.</comment>
   </data>
-  <data name="SettingContainer_OverrideMessageBaseLayer" xml:space="preserve">
-    <value>重設為繼承值。</value>
-    <comment>This button will remove a user's customization from a given setting, restoring it to the value that the profile inherited. This is a text label on a button.</comment>
-  </data>
   <data name="ColorScheme_ColorsHeader.Header" xml:space="preserve">
     <value>色彩</value>
     <comment>A header for the grouping of colors in the color scheme.</comment>
-  </data>
-  <data name="SettingContainer_OverrideMessageFragmentExtension" xml:space="preserve">
-    <value>重設值自: {}</value>
-    <comment>{} is replaced by the name of another profile or generator. This is a text label on a button that is dynamically generated and provides more context in the {}.</comment>
   </data>
   <data name="Profile_FontFaceShowAllFonts.Content" xml:space="preserve">
     <value>顯示所有字型</value>
@@ -1897,10 +1885,6 @@
     <value>捷徑名稱</value>
     <comment>Label for the text box that edits the action name.</comment>
   </data>
-  <data name="Actions_NameEntryBox.PlaceholderText" xml:space="preserve">
-    <value>捷徑名稱</value>
-    <comment>Placeholder text for the text box where the user can edit the action name.</comment>
-  </data>
   <data name="Actions_ShortcutAction.Text" xml:space="preserve">
     <value>捷徑類型</value>
     <comment>Label for the combo box that edits the action type.</comment>
@@ -1929,26 +1913,6 @@
     <value>按鍵繫結 #{}</value>
     <comment>{Locked="#{}"} Header label for an individual keyboard shortcut on the Edit Shortcut page. {} is replaced with the 1-based index of the shortcut (e.g. "Key binding #1").</comment>
   </data>
-  <data name="Actions_CommandDetails.Text" xml:space="preserve">
-    <value>命令詳細資料</value>
-    <comment>Label for the list of editable command details for the current command. This includes the command name and the shortcut action type.</comment>
-  </data>
-  <data name="Actions_Arguments.Text" xml:space="preserve">
-    <value>其他引數</value>
-    <comment>Label for the list of editable arguments for the currently selected action.</comment>
-  </data>
-  <data name="Actions_Keybindings.Text" xml:space="preserve">
-    <value>捷徑</value>
-    <comment>Label for the list of editable keybindings for the current command.</comment>
-  </data>
-  <data name="Actions_AddKeyChord.Text" xml:space="preserve">
-    <value>新增捷徑</value>
-    <comment>Button label that adds a keybinding to the current action.</comment>
-  </data>
-  <data name="Actions_AdditionalKeyChords" xml:space="preserve">
-    <value>和其他 {} 個</value>
-    <comment>Text that will be read out by a screen reader indicating that additional keybindings exist for this command. {} will be replaced by the number of additional keybindings.</comment>
-  </data>
   <data name="Actions_DeleteConfirmationButton.Content" xml:space="preserve">
     <value>是，刪除按鍵繫結關係</value>
     <comment>Button label that confirms deletion of a key binding entry.</comment>
@@ -1964,10 +1928,6 @@
   <data name="Actions_CommandDeleteConfirmationMessage.Text" xml:space="preserve">
     <value>您確定要刪除這個捷徑嗎?</value>
     <comment>Confirmation message displayed when the user attempts to delete an action.</comment>
-  </data>
-  <data name="Actions_InvalidKeyChordMessage" xml:space="preserve">
-    <value>無效的捷徑。請輸入有效的鍵盤快速鍵。</value>
-    <comment>Error message displayed when an invalid key chord is input by the user.</comment>
   </data>
   <data name="Actions_RenameConflictConfirmationAcceptButton" xml:space="preserve">
     <value>是</value>
@@ -2008,10 +1968,6 @@
   <data name="Actions_AddNewTextBlock.Text" xml:space="preserve">
     <value>新增新捷徑​</value>
     <comment>Button label that creates a new action on the actions page.</comment>
-  </data>
-  <data name="Actions_ActionComboBox.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>動作</value>
-    <comment>Label for a control that sets the action of a key binding.</comment>
   </data>
   <data name="Actions_NullEnumValue" xml:space="preserve">
     <value>使用全域設定</value>
@@ -2341,10 +2297,6 @@
     <value>設定為預設</value>
     <comment>Text label for a button that, when invoked, sets the selected color scheme as the default scheme to use.</comment>
   </data>
-  <data name="Globals_ConfirmCloseAllTabs.Header" xml:space="preserve">
-    <value>關閉多個索引標籤時發出警告</value>
-    <comment>Header for a control to toggle whether to show a confirm dialog box when closing the application with multiple tabs open.</comment>
-  </data>
   <data name="Globals_ConfirmOnClose.Header" xml:space="preserve">
     <value>關閉時警告</value>
     <comment>Header for a dropdown controlling when to show a confirmation dialog before closing.</comment>
@@ -2390,6 +2342,10 @@
   <data name="Settings_PortableModeNote.Text" xml:space="preserve">
     <value>Windows 終端機正以可攜式模式執行。</value>
     <comment>A disclaimer that indicates that Terminal is running in a mode that saves settings to a different folder.</comment>
+  </data>
+  <data name="Settings_PortableModeInfoLink.NavigateUri" xml:space="preserve">
+    <value>https://go.microsoft.com/fwlink/?linkid=2229086</value>
+    <comment>{Locked}</comment>
   </data>
   <data name="Settings_PortableModeInfoLinkTextRun.Text" xml:space="preserve">
     <value>深入了解。</value>
@@ -2829,24 +2785,12 @@
   <data name="Extensions_DisclaimerHyperlink.Content" xml:space="preserve">
     <value>深入了解延伸項目</value>
   </data>
-  <data name="Extensions_NavigateToProfileButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>瀏覽至設定檔</value>
-  </data>
-  <data name="Extensions_NavigateToProfileButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>瀏覽至設定檔</value>
-  </data>
-  <data name="Extensions_NavigateToColorSchemeButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>瀏覽至色彩配置</value>
-  </data>
-  <data name="Extensions_NavigateToColorSchemeButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>瀏覽至色彩配置</value>
-  </data>
   <data name="Extensions_ScopeUser" xml:space="preserve">
     <value>目前使用者</value>
     <comment>Label for the installation scope of an extension.</comment>
   </data>
   <data name="Extensions_ScopeSystem" xml:space="preserve">
-    <value>All Users</value>
+    <value>所有使用者</value>
     <comment>Label for the installation scope of an extension</comment>
   </data>
   <data name="Extensions_Scope.Header" xml:space="preserve">

@@ -276,7 +276,7 @@
     <value>Tab bar position</value>
     <comment>Header for a control to select where the tab strip is shown.</comment>
   </data>
-  <data name="Globals_TabPosition.HelpText" xml:space="preserve">
+  <data name="Globals_TabPosition.Description" xml:space="preserve">
     <value>Controls where the tab strip is shown: top, bottom, left, or right side of the window.</value>
     <comment>A description for what the "tab bar position" setting does.</comment>
   </data>
@@ -529,7 +529,7 @@
     <value>Application background material</value>
     <comment>Header for a control to choose the background material used by the application window.</comment>
   </data>
-  <data name="Globals_ApplicationBackgroundMaterial.HelpText" xml:space="preserve">
+  <data name="Globals_ApplicationBackgroundMaterial.Description" xml:space="preserve">
     <value>Choose the material used by the application window, tab row, and settings UI. This does not change the terminal content area; set a profile's terminal background material to "Use window material" if you want content to share the window backdrop.</value>
     <comment>A description for what the "application background material" setting does. Presented near "Globals_ApplicationBackgroundMaterial.Header".</comment>
   </data>
@@ -1137,25 +1137,9 @@
     <value>Variable font axes</value>
     <comment>Header for a control to allow editing the font axes.</comment>
   </data>
-  <data name="Profile_FontAxesAvailable.Text" xml:space="preserve">
-    <value>Add or remove font axes for the given font.</value>
-    <comment>A description for what the "font axes" setting does. Presented near "Profile_FontAxes".</comment>
-  </data>
-  <data name="Profile_FontAxesUnavailable.Text" xml:space="preserve">
-    <value>The selected font has no variable font axes.</value>
-    <comment>A description provided when the font axes setting is disabled. Presented near "Profile_FontAxes".</comment>
-  </data>
   <data name="Profile_FontFeatures.Header" xml:space="preserve">
     <value>Font features</value>
     <comment>Header for a control to allow editing the font features.</comment>
-  </data>
-  <data name="Profile_FontFeaturesAvailable.Text" xml:space="preserve">
-    <value>Add or remove font features for the given font.</value>
-    <comment>A description for what the "font features" setting does. Presented near "Profile_FontFeatures".</comment>
-  </data>
-  <data name="Profile_FontFeaturesUnavailable.Text" xml:space="preserve">
-    <value>The selected font has no font features.</value>
-    <comment>A description provided when the font features setting is disabled. Presented near "Profile_FontFeatures".</comment>
   </data>
   <data name="Profile_Hidden.Header" xml:space="preserve">
     <value>Hide profile from dropdown</value>
@@ -1333,7 +1317,7 @@
     <value>Terminal background material</value>
     <comment>Header for a control to choose the background material used by a terminal profile.</comment>
   </data>
-  <data name="Profile_TerminalBackgroundMaterial.HelpText" xml:space="preserve">
+  <data name="Profile_TerminalBackgroundMaterial.Description" xml:space="preserve">
     <value>Choose the material used by this profile's terminal background.</value>
     <comment>A description for what the "Profile_TerminalBackgroundMaterial" setting does.</comment>
   </data>
@@ -1861,17 +1845,9 @@
     <value>Hide Terminal in the notification area when it is minimized</value>
     <comment>Header for a control to toggle whether the terminal should hide itself in the notification area instead of the taskbar when minimized.</comment>
   </data>
-  <data name="SettingContainer_OverrideMessageBaseLayer" xml:space="preserve">
-    <value>Reset to inherited value.</value>
-    <comment>This button will remove a user's customization from a given setting, restoring it to the value that the profile inherited. This is a text label on a button.</comment>
-  </data>
   <data name="ColorScheme_ColorsHeader.Header" xml:space="preserve">
     <value>Colors</value>
     <comment>A header for the grouping of colors in the color scheme.</comment>
-  </data>
-  <data name="SettingContainer_OverrideMessageFragmentExtension" xml:space="preserve">
-    <value>Reset to value from: {}</value>
-    <comment>{} is replaced by the name of another profile or generator. This is a text label on a button that is dynamically generated and provides more context in the {}.</comment>
   </data>
   <data name="Profile_FontFaceShowAllFonts.Content" xml:space="preserve">
     <value>Show all fonts</value>
@@ -1909,10 +1885,6 @@
     <value>Shortcut name</value>
     <comment>Label for the text box that edits the action name.</comment>
   </data>
-  <data name="Actions_NameEntryBox.PlaceholderText" xml:space="preserve">
-    <value>Shortcut name</value>
-    <comment>Placeholder text for the text box where the user can edit the action name.</comment>
-  </data>
   <data name="Actions_ShortcutAction.Text" xml:space="preserve">
     <value>Shortcut type</value>
     <comment>Label for the combo box that edits the action type.</comment>
@@ -1941,26 +1913,6 @@
     <value>Key binding #{}</value>
     <comment>{Locked="#{}"} Header label for an individual keyboard shortcut on the Edit Shortcut page. {} is replaced with the 1-based index of the shortcut (e.g. "Key binding #1").</comment>
   </data>
-  <data name="Actions_CommandDetails.Text" xml:space="preserve">
-    <value>Command details</value>
-    <comment>Label for the list of editable command details for the current command. This includes the command name and the shortcut action type.</comment>
-  </data>
-  <data name="Actions_Arguments.Text" xml:space="preserve">
-    <value>Additional arguments</value>
-    <comment>Label for the list of editable arguments for the currently selected action.</comment>
-  </data>
-  <data name="Actions_Keybindings.Text" xml:space="preserve">
-    <value>Shortcuts</value>
-    <comment>Label for the list of editable keybindings for the current command.</comment>
-  </data>
-  <data name="Actions_AddKeyChord.Text" xml:space="preserve">
-    <value>Add shortcut</value>
-    <comment>Button label that adds a keybinding to the current action.</comment>
-  </data>
-  <data name="Actions_AdditionalKeyChords" xml:space="preserve">
-    <value>and {} more</value>
-    <comment>Text that will be read out by a screen reader indicating that additional keybindings exist for this command. {} will be replaced by the number of additional keybindings.</comment>
-  </data>
   <data name="Actions_DeleteConfirmationButton.Content" xml:space="preserve">
     <value>Yes, delete key binding</value>
     <comment>Button label that confirms deletion of a key binding entry.</comment>
@@ -1976,10 +1928,6 @@
   <data name="Actions_CommandDeleteConfirmationMessage.Text" xml:space="preserve">
     <value>Are you sure you want to delete this shortcut?</value>
     <comment>Confirmation message displayed when the user attempts to delete an action.</comment>
-  </data>
-  <data name="Actions_InvalidKeyChordMessage" xml:space="preserve">
-    <value>Invalid shortcut. Please enter a valid keyboard shortcut.</value>
-    <comment>Error message displayed when an invalid key chord is input by the user.</comment>
   </data>
   <data name="Actions_RenameConflictConfirmationAcceptButton" xml:space="preserve">
     <value>Yes</value>
@@ -2020,10 +1968,6 @@
   <data name="Actions_AddNewTextBlock.Text" xml:space="preserve">
     <value>Add new shortcut</value>
     <comment>Button label that creates a new action on the actions page.</comment>
-  </data>
-  <data name="Actions_ActionComboBox.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Action</value>
-    <comment>Label for a control that sets the action of a key binding.</comment>
   </data>
   <data name="Actions_NullEnumValue" xml:space="preserve">
     <value>Use global setting</value>
@@ -2352,10 +2296,6 @@
   <data name="ColorScheme_SetAsDefaultButton.Content" xml:space="preserve">
     <value>Set as default</value>
     <comment>Text label for a button that, when invoked, sets the selected color scheme as the default scheme to use.</comment>
-  </data>
-  <data name="Globals_ConfirmCloseAllTabs.Header" xml:space="preserve">
-    <value>Warn when closing more than one tab</value>
-    <comment>Header for a control to toggle whether to show a confirm dialog box when closing the application with multiple tabs open.</comment>
   </data>
   <data name="Globals_ConfirmOnClose.Header" xml:space="preserve">
     <value>Warn when closing</value>
@@ -2844,18 +2784,6 @@
   </data>
   <data name="Extensions_DisclaimerHyperlink.Content" xml:space="preserve">
     <value>Learn more about extensions</value>
-  </data>
-  <data name="Extensions_NavigateToProfileButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Navigate to profile</value>
-  </data>
-  <data name="Extensions_NavigateToProfileButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Navigate to profile</value>
-  </data>
-  <data name="Extensions_NavigateToColorSchemeButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Navigate to color scheme</value>
-  </data>
-  <data name="Extensions_NavigateToColorSchemeButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Navigate to color scheme</value>
   </data>
   <data name="Extensions_ScopeUser" xml:space="preserve">
     <value>Current User</value>

@@ -272,7 +272,7 @@
     <value>Tab bar position</value>
     <comment>Header for a control to select where the tab strip is shown.</comment>
   </data>
-  <data name="Globals_TabPosition.HelpText" xml:space="preserve">
+  <data name="Globals_TabPosition.Description" xml:space="preserve">
     <value>Controls where the tab strip is shown: top, bottom, left, or right side of the window.</value>
     <comment>A description for what the "tab bar position" setting does.</comment>
   </data>
