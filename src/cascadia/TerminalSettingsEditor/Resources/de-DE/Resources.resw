@@ -577,7 +577,7 @@
     <value>OSC 777 (Desktop Notification) zum Anzeigen von Popupbenachrichtigungen zulassen</value>
     <comment>{Locked="OSC 777"}{Locked="Desktop Notification"}Header for a control to toggle support for applications to display desktop toast notifications via the OSC 777 escape sequence.</comment>
   </data>
-  <data name="Profile_AllowOscNotifications.HelpText" xml:space="preserve">
+  <data name="Profile_AllowOscNotifications.Description" xml:space="preserve">
     <value>Wenn diese Option aktiviert ist, können Anwendungen die OSC 777 Escapesequenz senden, um eine Desktopbenachrichtigung mit einem benutzerdefinierten Titel und Text auszulösen.</value>
     <comment>{Locked="OSC 777"}Help text for the OSC 777 desktop notification toggle.</comment>
   </data>

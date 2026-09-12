@@ -577,7 +577,7 @@
     <value>Άľℓôẅ OSC 777 (Desktop Notification) ťõ šђǿщ ŧôášτ ŋòţĩƒíćäťΐóйś !!! !!! !!! !!! !!! !!! !</value>
     <comment>{Locked="OSC 777"}{Locked="Desktop Notification"}Header for a control to toggle support for applications to display desktop toast notifications via the OSC 777 escape sequence.</comment>
   </data>
-  <data name="Profile_AllowOscNotifications.HelpText" xml:space="preserve">
+  <data name="Profile_AllowOscNotifications.Description" xml:space="preserve">
     <value>Ẅђĕņ ěňāъłèð, ãφρļїčāтīòήѕ ¢аń ŝëлđ ťĥĕ OSC 777 ēśćάφз şèqüęńĉз τö ťѓĩĝĝєг ā ðĕѕќŧöρ лόтΐƒĩςªτίøп ẃìţн д сџšτõm тįŧŀé āⁿδ вόđÿ. !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!</value>
     <comment>{Locked="OSC 777"}Help text for the OSC 777 desktop notification toggle.</comment>
   </data>

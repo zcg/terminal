@@ -577,7 +577,7 @@
     <value>Autoriser OSC 777 (Desktop Notification) à afficher des notifications toast</value>
     <comment>{Locked="OSC 777"}{Locked="Desktop Notification"}Header for a control to toggle support for applications to display desktop toast notifications via the OSC 777 escape sequence.</comment>
   </data>
-  <data name="Profile_AllowOscNotifications.HelpText" xml:space="preserve">
+  <data name="Profile_AllowOscNotifications.Description" xml:space="preserve">
     <value>Lorsque cette option est activée, les applications peuvent envoyer la séquence d’échappement OSC 777 pour déclencher une notification de bureau avec un titre et un corps personnalisés.</value>
     <comment>{Locked="OSC 777"}Help text for the OSC 777 desktop notification toggle.</comment>
   </data>

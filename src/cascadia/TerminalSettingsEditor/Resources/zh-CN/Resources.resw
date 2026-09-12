@@ -569,7 +569,7 @@
     <value>通过拖动重新排列或拖出选项卡</value>
     <comment>Header for a control to toggle whether tabs can be dragged to reorder them or tear them out into a new window.</comment>
   </data>
-  <data name="Globals_EnableTabDragDrop.HelpText" xml:space="preserve">
+  <data name="Globals_EnableTabDragDrop_StatefulHelpText" xml:space="preserve">
     <value>禁用后，仍可通过“移动选项卡”操作移动选项卡。</value>
     <comment>A description for what the "reorder and tear out tabs by dragging" setting does. Presented near "Globals_EnableTabDragDrop.Header".</comment>
   </data>
@@ -625,7 +625,7 @@
     <value>允许 OSC 777 (Desktop Notification)显示 toast 通知</value>
     <comment>{Locked="OSC 777"}{Locked="Desktop Notification"}Header for a control to toggle support for applications to display desktop toast notifications via the OSC 777 escape sequence.</comment>
   </data>
-  <data name="Profile_AllowOscNotifications.HelpText" xml:space="preserve">
+  <data name="Profile_AllowOscNotifications.Description" xml:space="preserve">
     <value>启用后，应用程序可以发送 OSC 777 转义序列以触发具有自定义标题和正文的桌面通知。</value>
     <comment>{Locked="OSC 777"}Help text for the OSC 777 desktop notification toggle.</comment>
   </data>

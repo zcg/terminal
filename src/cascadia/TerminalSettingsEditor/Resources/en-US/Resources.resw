@@ -569,7 +569,7 @@
     <value>Reorder and tear out tabs by dragging</value>
     <comment>Header for a control to toggle whether tabs can be dragged to reorder them or tear them out into a new window.</comment>
   </data>
-  <data name="Globals_EnableTabDragDrop.HelpText" xml:space="preserve">
+  <data name="Globals_EnableTabDragDrop_StatefulHelpText" xml:space="preserve">
     <value>When disabled, tabs can still be moved with the "move tab" actions.</value>
     <comment>A description for what the "reorder and tear out tabs by dragging" setting does. Presented near "Globals_EnableTabDragDrop.Header".</comment>
   </data>
@@ -625,7 +625,7 @@
     <value>Allow OSC 777 (Desktop Notification) to show toast notifications</value>
     <comment>{Locked="OSC 777"}{Locked="Desktop Notification"}Header for a control to toggle support for applications to display desktop toast notifications via the OSC 777 escape sequence.</comment>
   </data>
-  <data name="Profile_AllowOscNotifications.HelpText" xml:space="preserve">
+  <data name="Profile_AllowOscNotifications.Description" xml:space="preserve">
     <value>When enabled, applications can send the OSC 777 escape sequence to trigger a desktop notification with a custom title and body.</value>
     <comment>{Locked="OSC 777"}Help text for the OSC 777 desktop notification toggle.</comment>
   </data>

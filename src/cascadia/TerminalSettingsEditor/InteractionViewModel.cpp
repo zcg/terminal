@@ -37,6 +37,9 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         {
             return RS_(L"Globals_EnableTabDragDrop_Unavailable");
         }
-        return RS_(L"Globals_EnableTabDragDrop/HelpText");
+        // NOTE: deliberately NOT a dotted ".HelpText" key -- an x:Uid'd SettingsCard
+        // would try to apply a dotted key as a property and throw, since
+        // SettingsCard has no HelpText property.
+        return RS_(L"Globals_EnableTabDragDrop_StatefulHelpText");
     }
 }
