@@ -26,6 +26,7 @@
 
 #include <dwmapi.h>
 #include <fmt/compile.h>
+#include <winrt/Windows.UI.Xaml.Media.Animation.h>
 
 namespace winrt
 {
@@ -111,6 +112,34 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     {
         InitializeComponent();
         _UpdateSettingsBackground();
+
+        // Navigating between pages is expensive: the UI thread is busy building
+        // the new page's XAML, and the frame's built-in (DrillIn) transition
+        // animates both pages while that happens, so the switch visibly stutters.
+        // We suppress the built-in transition (see MainPage.xaml) and fade the
+        // new page in instead: opacity animations are independent, which means
+        // they run on the compositor and stay smooth even while the UI thread
+        // is still laying the page out.
+        contentFrame().Navigated([](const IInspectable& sender, const WUX::Navigation::NavigationEventArgs& /*args*/) {
+            const auto frame = sender.try_as<WUX::Controls::Frame>();
+            if (!frame)
+            {
+                return;
+            }
+
+            frame.Opacity(0.0);
+
+            WUX::Media::Animation::DoubleAnimation fade;
+            fade.To(1.0);
+            fade.Duration(WUX::DurationHelper::FromTimeSpan(std::chrono::duration_cast<winrt::Windows::Foundation::TimeSpan>(std::chrono::milliseconds(150))));
+
+            WUX::Media::Animation::Storyboard::SetTarget(fade, frame);
+            WUX::Media::Animation::Storyboard::SetTargetProperty(fade, L"Opacity");
+
+            WUX::Media::Animation::Storyboard storyboard;
+            storyboard.Children().Append(fade);
+            storyboard.Begin();
+        });
 
         _newTabMenuPageVM = winrt::make<NewTabMenuViewModel>(_settingsClone);
         _ntmViewModelChangedRevoker = _newTabMenuPageVM.PropertyChanged(winrt::auto_revoke, [this](auto&&, const PropertyChangedEventArgs& args) {

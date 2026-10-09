@@ -1,12 +1,26 @@
+<p align="right">
+  <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/README-%E4%B8%AD%E6%96%87-red?style=for-the-badge" alt="切换到中文"></a>
+</p>
+
 ![Windows Terminal project logos and branding image](https://github.com/microsoft/terminal/assets/91625426/333ddc76-8ab2-4eb4-a8c0-4d7b953b1179)
 
 [![Terminal Build Status](https://dev.azure.com/shine-oss/terminal/_apis/build/status%2FTerminal%20CI?branchName=main)](https://dev.azure.com/shine-oss/terminal/_build/latest?definitionId=1&branchName=main)
 
 # Welcome to the Windows Terminal, Console and Command-Line repo
 
+> [!IMPORTANT]
+> **This is a personal fork of Windows Terminal.** It follows the upstream
+> `main` branch and adds a set of extra features and fixes on top of it.
+> See [What's different in this build](#whats-different-in-this-build) for a
+> plain-language tour, or jump straight to
+> [Download and install](#download-and-install) to grab a ready-made installer
+> from the Releases page. 中文说明请点右上角的 **中文** 按钮。
+
 <details>
   <summary><strong>Table of Contents</strong></summary>
 
+- [What's different in this build](#whats-different-in-this-build)
+- [Download and install](#download-and-install)
 - [Installing and running Windows Terminal](#installing-and-running-windows-terminal)
   - [Microsoft Store \[Recommended\]](#microsoft-store-recommended)
   - [Other install methods](#other-install-methods)
@@ -55,6 +69,132 @@ Related repositories include:
   ([Repo: Contribute to the docs](https://github.com/MicrosoftDocs/terminal))
 * [Console API Documentation](https://github.com/MicrosoftDocs/Console-Docs)
 * [Cascadia Code Font](https://github.com/Microsoft/Cascadia-Code)
+
+---
+
+## What's different in this build
+
+This fork tracks the upstream `main` branch and adds a handful of extra features
+and fixes on top of it. Everything described below is **already included** in the
+packages published on the [Releases page](../../releases) — you do not need to
+build anything yourself.
+
+### Tab bar position
+
+The tab strip is no longer stuck at the top. You can move it to the **bottom** of
+the window, or to the **left** or **right** side, where it turns into a vertical
+list — much easier to scan when you have a lot of tabs open.
+
+**How to use it:** open **Settings** > **Appearance** > **Tab bar position** and
+pick `Top`, `Bottom`, `Left (vertical)` or `Right (vertical)`. The same option is
+called `tabPosition` in `settings.json`.
+
+There is also a `toggleVerticalTabs` action if you would rather use a shortcut:
+bind it to a key of your choice and press it to flip between the horizontal and
+vertical layouts. It has no default shortcut.
+
+<!-- SCREENSHOT: tab bar position -->
+> _[Screenshot: tab bar position]_
+
+### Window background material
+
+The window frame, the tab row and the settings pages can use Mica, Mica Alt or
+acrylic, so Terminal blends in with the rest of Windows instead of sitting on a
+flat block of colour.
+
+**How to use it:** open **Settings** > **Appearance** > **Application background
+material** and pick a style. The choices are `Default`, `Solid`, `Mica`,
+`Mica Alt`, `Acrylic` and `Acrylic Dark`. The same option is called
+`applicationBackgroundMaterial` in `settings.json`.
+
+<!-- SCREENSHOT: window background material -->
+> _[Screenshot: window background material]_
+
+### No more ghost characters in transparent windows
+
+With transparency or acrylic turned on, scrolling and switching used to leave
+faint leftover characters and smears behind. That is fixed. The same round of
+work also took care of text that landed in the wrong place at non-standard
+display scaling, leftovers while scrolling, and scroll margins leaking between
+pages and between the main and alternate screen buffers.
+
+<!-- SCREENSHOT: before / after ghosting -->
+> _[Screenshot: before and after]_
+
+### Better Chinese and symbol alignment
+
+Characters from the Private Use Area are now treated as narrow no matter which
+ambiguous-width policy is selected, so lines that mix Chinese with box-drawing
+characters and symbols line up properly.
+
+### Right-to-left text
+
+Arabic, Hebrew and other right-to-left scripts are shaped correctly, and
+mixed-direction lines are broken at proper word and script boundaries.
+
+### Drag tabs on or off
+
+**Settings** > **Interaction** > **Reorder and tear out tabs by dragging**
+controls whether tabs can be dragged to reorder them, or pulled out into a new
+window. When Terminal is running as administrator or as another user, the switch
+is turned off automatically and a note explains why — dragging tabs in that
+situation would crash the window. The "move tab" actions still work.
+
+<!-- SCREENSHOT: tab drag setting -->
+> _[Screenshot: tab drag setting]_
+
+### Smoother settings pages
+
+Moving between pages in the settings UI no longer stutters. The built-in page
+transition was replaced with a simple fade, which stays smooth even while the
+next page is still being put together.
+
+### True colour in every new session
+
+New sessions start with `COLORTERM=truecolor` in their environment, so tools that
+look for it — `ls`, `bat` and plenty of other command-line programs — produce
+full 24-bit colour output.
+
+### Filled-in Chinese UI
+
+Missing Simplified Chinese strings in the settings UI were filled in, dead
+entries were removed, and a leftover text key that could crash a settings page
+was fixed.
+
+---
+
+## Download and install
+
+The quickest way to try this build is to download a ready-made package from the
+[Releases page](../../releases). You do not need Visual Studio and you do not
+need to compile anything.
+
+1. Open the [latest release](../../releases/latest) and, under **Assets**,
+   download the `.msixbundle` file — for example
+   `CascadiaPackage_0.0.89.0_x64.msixbundle` — together with the matching `.cer`
+   certificate.
+2. Trust the certificate once. Right-click the `.cer` file, choose **Install
+   Certificate**, select **Local Machine**, then **Place all certificates in the
+   following store** > **Browse** > **Trusted People**, and finish the wizard.
+3. Double-click the `.msixbundle` and follow the installer.
+
+If double-clicking does nothing, install it from PowerShell instead:
+
+```powershell
+Add-AppxPackage .\CascadiaPackage_0.0.89.0_x64.msixbundle
+```
+
+The package is named **Windows Terminal Dev**, so it installs *next to* the Store
+version of Windows Terminal rather than replacing it. You can keep both, and
+remove this one at any time from **Settings** > **Apps** > **Installed apps**.
+
+> [!NOTE]
+> The package is signed with a self-signed test certificate rather than a
+> Microsoft Store certificate, which is why step 2 is needed. Only install it if
+> you are comfortable trusting a certificate that was generated on the machine
+> that built the package.
+
+---
 
 ## Installing and running Windows Terminal
 

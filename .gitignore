@@ -286,3 +286,10 @@ profiles.json
 
 # MSBuildCache
 /MSBuildCacheLogs/
+
+# Local tooling directories (never part of the source tree)
+.commandcode/
+.workbuddy-ai/
+
+# Packaged release output
+dist/

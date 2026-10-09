@@ -211,8 +211,11 @@
                     <Frame.ContentTransitions>
                         <TransitionCollection>
                             <NavigationThemeTransition>
+                                <!--  The built-in DrillIn transition animates both the old and the new page while
+                                      the UI thread is still building the new page's XAML, which makes page switches
+                                      stutter. MainPage fades the new page in with a compositor animation instead.  -->
                                 <NavigationThemeTransition.DefaultNavigationTransitionInfo>
-                                    <DrillInNavigationTransitionInfo />
+                                    <SuppressNavigationTransitionInfo />
                                 </NavigationThemeTransition.DefaultNavigationTransitionInfo>
                             </NavigationThemeTransition>
                         </TransitionCollection>
