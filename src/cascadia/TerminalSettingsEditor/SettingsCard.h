@@ -29,6 +29,8 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         void OnApplyTemplate();
         void OnPointerPressed(const Windows::UI::Xaml::Input::PointerRoutedEventArgs& e);
         void OnPointerReleased(const Windows::UI::Xaml::Input::PointerRoutedEventArgs& e);
+        void OnKeyDown(const Windows::UI::Xaml::Input::KeyRoutedEventArgs& e);
+        void OnKeyUp(const Windows::UI::Xaml::Input::KeyRoutedEventArgs& e);
 
         // Automation peer override.
         Windows::UI::Xaml::Automation::Peers::AutomationPeer OnCreateAutomationPeer();
@@ -40,6 +42,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         DEPENDENCY_PROPERTY(hstring, ActionIconToolTip);
         DEPENDENCY_PROPERTY(bool, IsClickEnabled);
         DEPENDENCY_PROPERTY(bool, IsActionIconVisible);
+        DEPENDENCY_PROPERTY(bool, IsExperimental);
         DEPENDENCY_PROPERTY(Editor::SettingsCardContentAlignment, ContentAlignment);
 
     private:
@@ -60,6 +63,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         void _UpdateDescriptionVisibility();
         void _UpdateFullDescription();
         void _UpdateHeaderIconVisibility();
+        void _UpdateExperimentalBadgeVisibility();
         void _UpdateContentVisibility();
         void _UpdateContentAlignmentState();
         void _CheckInitialVisualState();
@@ -74,8 +78,6 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         Windows::UI::Xaml::UIElement::PointerExited_revoker _pointerExitedRevoker;
         Windows::UI::Xaml::UIElement::PointerCaptureLost_revoker _pointerCaptureLostRevoker;
         Windows::UI::Xaml::UIElement::PointerCanceled_revoker _pointerCanceledRevoker;
-        Windows::UI::Xaml::UIElement::PreviewKeyDown_revoker _previewKeyDownRevoker;
-        Windows::UI::Xaml::UIElement::PreviewKeyUp_revoker _previewKeyUpRevoker;
         Windows::UI::Xaml::VisualStateGroup::CurrentStateChanged_revoker _contentAlignmentStatesChangedRevoker;
         int64_t _contentChangedToken{ 0 };
     };

@@ -29,7 +29,7 @@ using namespace Microsoft::Console::Render::Atlas;
 
 // Present() is called without the console buffer lock being held.
 // --> Put as much in here as possible.
-[[nodiscard]] HRESULT AtlasEngine::Present() noexcept
+[[nodiscard]] HRESULT AtlasEngine::Present(HANDLE shutdownEvent) noexcept
 try
 {
     if (!_p.dxgi.adapter)
@@ -44,21 +44,10 @@ try
 
     if (_p.swapChain.generation != _p.s.generation())
     {
-        _handleSwapChainUpdate();
-    }
-
-    // Skip frames that have nothing to present. _present() wouldn't call Present1() for them anyway,
-    // but some drivers only recycle the resources that Render() touches once a frame has actually
-    // been presented, and so every such frame leaks a bit of memory. This adds up quickly while a
-    // pane is scrolled up with output still arriving below the viewport, or when a TUI keeps moving
-    // a hidden cursor around (GH#20342). Render() only ever widens a dirty rect that's already
-    // non-empty, so an empty one stays empty. The exception are custom shaders (the retro effect
-    // included), which mark the entire target as dirty. Skipping them is fine as long as they don't
-    // use the time variable, since their output then only depends on the text texture, which hasn't
-    // changed. Those that do use it have to run every frame, and RequiresContinuousRedraw() says so.
-    if (_p.dirtyRectInPx.empty() && !_b->RequiresContinuousRedraw())
-    {
-        return S_OK;
+        if (!_handleSwapChainUpdate(shutdownEvent))
+        {
+            return S_FALSE;
+        }
     }
 
     _b->Render(_p);
@@ -99,13 +88,13 @@ CATCH_RETURN()
     return ATLAS_DEBUG_CONTINUOUS_REDRAW || (_b && _b->RequiresContinuousRedraw());
 }
 
-void AtlasEngine::WaitUntilCanRender() noexcept
+bool AtlasEngine::WaitUntilCanRender(HANDLE shutdownEvent) noexcept
 {
     if constexpr (ATLAS_DEBUG_RENDER_DELAY)
     {
         Sleep(ATLAS_DEBUG_RENDER_DELAY);
     }
-    _waitUntilCanRender();
+    return _waitUntilCanRender(shutdownEvent);
 }
 
 #pragma endregion
@@ -312,11 +301,14 @@ void AtlasEngine::_recreateBackend()
     _p.MarkAllAsDirty();
 }
 
-void AtlasEngine::_handleSwapChainUpdate()
+bool AtlasEngine::_handleSwapChainUpdate(HANDLE shutdownEvent)
 {
     if (_p.swapChain.targetGeneration != _p.s->target.generation())
     {
-        _createSwapChain();
+        if (!_createSwapChain(shutdownEvent))
+        {
+            return false;
+        }
     }
     else if (_p.swapChain.targetSize != _p.s->targetSize)
     {
@@ -329,11 +321,12 @@ void AtlasEngine::_handleSwapChainUpdate()
     }
 
     _p.swapChain.generation = _p.s.generation();
+    return true;
 }
 
 static constexpr DXGI_SWAP_CHAIN_FLAG swapChainFlags = ATLAS_DEBUG_DISABLE_FRAME_LATENCY_WAITABLE_OBJECT ? DXGI_SWAP_CHAIN_FLAG{} : DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
-void AtlasEngine::_createSwapChain()
+bool AtlasEngine::_createSwapChain(HANDLE shutdownEvent)
 {
     _destroySwapChain();
 
@@ -392,9 +385,13 @@ void AtlasEngine::_createSwapChain()
 
     LOG_IF_FAILED(_p.swapChain.swapChain->SetMaximumFrameLatency(1));
 
-    WaitUntilCanRender();
+    if (!_waitUntilCanRender(shutdownEvent))
+    {
+        _destroySwapChain();
+        return false;
+    }
 
-    if (_p.swapChainChangedCallback)
+    if (_p.swapChainChangedCallback && _p.swapChain.handle)
     {
         try
         {
@@ -402,6 +399,7 @@ void AtlasEngine::_createSwapChain()
         }
         CATCH_LOG()
     }
+    return true;
 }
 
 void AtlasEngine::_destroySwapChain()
@@ -447,7 +445,7 @@ void AtlasEngine::_updateMatrixTransform()
     _p.swapChain.fontGeneration = _p.s->font.generation();
 }
 
-void AtlasEngine::_waitUntilCanRender() noexcept
+bool AtlasEngine::_waitUntilCanRender(HANDLE shutdownEvent) noexcept
 {
     // IDXGISwapChain2::GetFrameLatencyWaitableObject returns an auto-reset event.
     // Once we've waited on the event, waiting on it again will block until the timeout elapses.
@@ -456,10 +454,25 @@ void AtlasEngine::_waitUntilCanRender() noexcept
     {
         if (_p.swapChain.waitForPresentation)
         {
-            WaitForSingleObjectEx(_p.swapChain.frameLatencyWaitableObject.get(), 100, true);
+            const HANDLE handles[]{ shutdownEvent, _p.swapChain.frameLatencyWaitableObject.get() };
+            const auto res = WaitForMultipleObjects(ARRAYSIZE(handles), &handles[0], FALSE, INFINITE);
+            FAIL_FAST_LAST_ERROR_IF(res == WAIT_FAILED);
+            if (res == WAIT_OBJECT_0)
+            {
+                return false;
+            }
             _p.swapChain.waitForPresentation = false;
         }
+        else
+        {
+            // Without a presentation to pace us, use the same throttle as RenderEngineBase.
+            // Off-screen output can otherwise keep waking the renderer in a tight loop.
+            const auto res = WaitForSingleObject(shutdownEvent, 8);
+            FAIL_FAST_LAST_ERROR_IF(res == WAIT_FAILED);
+            return res == WAIT_TIMEOUT;
+        }
     }
+    return true;
 }
 
 void AtlasEngine::_present()
@@ -491,6 +504,9 @@ void AtlasEngine::_present()
     // Present1() dislikes being called with an empty dirty rect.
     if (dirtyRect.left >= dirtyRect.right || dirtyRect.top >= dirtyRect.bottom)
     {
+        // Render() has already issued GPU commands. If we don't Present() now, the GPU's
+        // command queue would just fill up and effectively leak memory. Flush() it.
+        _p.deviceContext->Flush();
         return;
     }
 

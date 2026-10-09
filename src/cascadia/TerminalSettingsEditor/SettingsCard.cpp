@@ -25,6 +25,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     DependencyProperty SettingsCard::_ActionIconToolTipProperty{ nullptr };
     DependencyProperty SettingsCard::_IsClickEnabledProperty{ nullptr };
     DependencyProperty SettingsCard::_IsActionIconVisibleProperty{ nullptr };
+    DependencyProperty SettingsCard::_IsExperimentalProperty{ nullptr };
     DependencyProperty SettingsCard::_ContentAlignmentProperty{ nullptr };
 
     static constexpr std::wstring_view NormalState{ L"Normal" };
@@ -48,6 +49,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     static constexpr std::wstring_view HeaderPresenter{ L"PART_HeaderPresenter" };
     static constexpr std::wstring_view DescriptionPresenter{ L"PART_DescriptionPresenter" };
     static constexpr std::wstring_view HeaderIconPresenterHolder{ L"PART_HeaderIconPresenterHolder" };
+    static constexpr std::wstring_view ExperimentalBadgePart{ L"PART_ExperimentalBadge" };
     static constexpr std::wstring_view ContentPresenterPart{ L"PART_ContentPresenter" };
     static constexpr std::wstring_view RootGridPart{ L"PART_RootGrid" };
 
@@ -134,6 +136,14 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
                 xaml_typename<Editor::SettingsCard>(),
                 PropertyMetadata{ box_value(true), PropertyChangedCallback{ &SettingsCard::_OnIsActionIconVisibleChanged } });
         }
+        if (!_IsExperimentalProperty)
+        {
+            _IsExperimentalProperty = DependencyProperty::Register(
+                L"IsExperimental",
+                xaml_typename<bool>(),
+                xaml_typename<Editor::SettingsCard>(),
+                PropertyMetadata{ box_value(false) });
+        }
         if (!_ContentAlignmentProperty)
         {
             _ContentAlignmentProperty = DependencyProperty::Register(
@@ -202,6 +212,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         _UpdateHeaderVisibility();
         _UpdateDescriptionVisibility();
         _UpdateHeaderIconVisibility();
+        _UpdateExperimentalBadgeVisibility();
         _UpdateContentVisibility();
         // Initial visual states.
         _CheckInitialVisualState();
@@ -333,7 +344,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
                 // Don't override ButtonBase content (would clobber its own name) or plain text blocks.
                 if (!element.try_as<ButtonBase>() && !element.try_as<TextBlock>())
                 {
-                    Automation::AutomationProperties::SetName(element, headerString);
+                    Automation::AutomationProperties::SetName(element, BuildAccessibleName(headerString, IsExperimental()));
                 }
             }
         }
@@ -372,34 +383,40 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
                 strongThis->_GoToCommonState(NormalState, true);
             }
         });
-        _previewKeyDownRevoker = PreviewKeyDown(winrt::auto_revoke, [weakThis = get_weak()](auto&&, const Windows::UI::Xaml::Input::KeyRoutedEventArgs& e) {
-            const auto strongThis = weakThis.get();
-            if (!strongThis)
+    }
+
+    void SettingsCard::OnKeyDown(const Windows::UI::Xaml::Input::KeyRoutedEventArgs& e)
+    {
+        if (!_interactionEnabled)
+        {
+            return;
+        }
+
+        const auto key = e.Key();
+        if (key == Windows::System::VirtualKey::Enter || key == Windows::System::VirtualKey::Space || key == Windows::System::VirtualKey::GamepadA)
+        {
+            const auto focused{ _GetFocusedElement() };
+            if (focused && focused.try_as<Editor::SettingsCard>() == get_strong().as<Editor::SettingsCard>())
             {
-                return;
+                _GoToCommonState(PressedState, true);
             }
-            const auto key = e.Key();
-            if (key == Windows::System::VirtualKey::Enter || key == Windows::System::VirtualKey::Space || key == Windows::System::VirtualKey::GamepadA)
-            {
-                const auto focused{ strongThis->_GetFocusedElement() };
-                if (focused && focused.try_as<Editor::SettingsCard>() == strongThis.as<Editor::SettingsCard>())
-                {
-                    strongThis->_GoToCommonState(PressedState, true);
-                }
-            }
-        });
-        _previewKeyUpRevoker = PreviewKeyUp(winrt::auto_revoke, [weakThis = get_weak()](auto&&, const Windows::UI::Xaml::Input::KeyRoutedEventArgs& e) {
-            const auto strongThis = weakThis.get();
-            if (!strongThis)
-            {
-                return;
-            }
-            const auto key = e.Key();
-            if (key == Windows::System::VirtualKey::Enter || key == Windows::System::VirtualKey::Space || key == Windows::System::VirtualKey::GamepadA)
-            {
-                strongThis->_GoToCommonState(NormalState, true);
-            }
-        });
+            base_type::OnKeyDown(e);
+        }
+    }
+
+    void SettingsCard::OnKeyUp(const Windows::UI::Xaml::Input::KeyRoutedEventArgs& e)
+    {
+        if (!_interactionEnabled)
+        {
+            return;
+        }
+
+        const auto key = e.Key();
+        if (key == Windows::System::VirtualKey::Enter || key == Windows::System::VirtualKey::Space || key == Windows::System::VirtualKey::GamepadA)
+        {
+            _GoToCommonState(NormalState, true);
+            base_type::OnKeyUp(e);
+        }
     }
 
     void SettingsCard::_DisableButtonInteraction()
@@ -410,8 +427,6 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         _pointerExitedRevoker.revoke();
         _pointerCaptureLostRevoker.revoke();
         _pointerCanceledRevoker.revoke();
-        _previewKeyDownRevoker.revoke();
-        _previewKeyUpRevoker.revoke();
     }
 
     void SettingsCard::_GoToCommonState(const std::wstring_view& state, bool useTransitions)
@@ -491,6 +506,17 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         if (const auto element{ Content().try_as<UIElement>() }; element && !element.try_as<Panel>())
         {
             AutomationProperties::SetFullDescription(element, text);
+        }
+    }
+
+    void SettingsCard::_UpdateExperimentalBadgeVisibility()
+    {
+        if (const auto child{ GetTemplateChild(hstring{ ExperimentalBadgePart }) })
+        {
+            if (const auto frameworkChild{ child.try_as<FrameworkElement>() })
+            {
+                frameworkChild.Visibility(IsExperimental() ? Visibility::Visible : Visibility::Collapsed);
+            }
         }
     }
 
@@ -608,7 +634,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         const auto obj{ d.try_as<Editor::SettingsCard>() };
         const auto self = get_self<SettingsCard>(obj);
         self->_UpdateHeaderIconVisibility();
-        // HeaderIcon type may have flipped between BitmapIcon and other icon types — re-evaluate
+        // HeaderIcon type may have flipped between BitmapIcon and other icon types. Re-evaluate
         // the BitmapHeaderIcon visual state so the disabled-opacity setter is applied (or cleared).
         self->_CheckHeaderIconState();
     }
@@ -670,11 +696,11 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
             {
                 if (const auto manualName{ AutomationProperties::GetName(card) }; !manualName.empty())
                 {
-                    return manualName;
+                    return BuildAccessibleName(manualName, card.IsExperimental());
                 }
                 if (const auto headerString{ unbox_value_or<hstring>(card.Header(), hstring{}) }; !headerString.empty())
                 {
-                    return headerString;
+                    return BuildAccessibleName(headerString, card.IsExperimental());
                 }
             }
             // Not clickable, or no header text: fall back to AutomationProperties.Name (matching

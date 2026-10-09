@@ -137,6 +137,45 @@ namespace winrt::Microsoft::Terminal::Settings
         return GetLibraryResourceString(fmtKey);
     }
 
+    hstring ColorToHexString(const winrt::Windows::UI::Color& color)
+    {
+        return hstring{ fmt::format(FMT_COMPILE(L"#{:02X}{:02X}{:02X}"), color.R, color.G, color.B) };
+    }
+
+    hstring FormatAccessibleName(const std::wstring_view headerResourceKey, const std::wstring_view value)
+    {
+        return til::hstring_format(FMT_COMPILE(L"{}: {}"), GetLibraryResourceString(headerResourceKey), value);
+    }
+
+    // Returns the control that should actually receive focus for a resolved
+    // search-navigation target.
+    Controls::Control ResolveFocusTarget(const Controls::Control& element)
+    {
+        if (!element)
+        {
+            return element;
+        }
+
+        winrt::Windows::Foundation::IInspectable content{ nullptr };
+        if (const auto expander = element.try_as<Editor::SettingsExpander>())
+        {
+            content = expander.Content();
+        }
+        else if (const auto card = element.try_as<Editor::SettingsCard>())
+        {
+            content = card.Content();
+        }
+
+        if (content)
+        {
+            if (const auto contentControl = content.try_as<Controls::Control>())
+            {
+                return contentControl;
+            }
+        }
+        return element;
+    }
+
     safe_void_coroutine ExpandAncestorsAndBringIntoView(FrameworkElement root, Controls::Control control)
     {
         if (!control)

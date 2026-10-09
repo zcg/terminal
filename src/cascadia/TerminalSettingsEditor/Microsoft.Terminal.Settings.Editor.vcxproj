@@ -123,10 +123,6 @@
       <DependentUpon>Profiles.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
-    <ClInclude Include="RenderingViewModel.h">
-      <DependentUpon>RenderingViewModel.idl</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
     <ClInclude Include="InteractionViewModel.h">
       <DependentUpon>InteractionViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
@@ -163,6 +159,10 @@
       <DependentUpon>Profiles_Appearance.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
+    <ClInclude Include="Profiles_UnfocusedAppearance.h">
+      <DependentUpon>Profiles_UnfocusedAppearance.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="Profiles_Terminal.h">
       <DependentUpon>Profiles_Terminal.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -171,11 +171,11 @@
       <DependentUpon>Appearances.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
-    <ClInclude Include="Rendering.h">
-      <DependentUpon>Rendering.xaml</DependentUpon>
-    </ClInclude>
     <ClInclude Include="SettingsCard.h">
       <DependentUpon>SettingsCard.idl</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="SettingResetButton.h">
+      <DependentUpon>SettingResetButton.idl</DependentUpon>
     </ClInclude>
     <ClInclude Include="SettingsExpander.h">
       <DependentUpon>SettingsExpander.idl</DependentUpon>
@@ -253,13 +253,13 @@
     <Page Include="Profiles_Appearance.xaml">
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Profiles_UnfocusedAppearance.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Profiles_Terminal.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Appearances.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Rendering.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Include="SettingsControlsStyle.xaml">
@@ -351,10 +351,6 @@
       <DependentUpon>Profiles.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
-    <ClCompile Include="RenderingViewModel.cpp">
-      <DependentUpon>RenderingViewModel.idl</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
     <ClCompile Include="InteractionViewModel.cpp">
       <DependentUpon>InteractionViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
@@ -391,6 +387,10 @@
       <DependentUpon>Profiles_Appearance.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
+    <ClCompile Include="Profiles_UnfocusedAppearance.cpp">
+      <DependentUpon>Profiles_UnfocusedAppearance.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="Profiles_Terminal.cpp">
       <DependentUpon>Profiles_Terminal.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -399,11 +399,11 @@
       <DependentUpon>Appearances.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
-    <ClCompile Include="Rendering.cpp">
-      <DependentUpon>Rendering.xaml</DependentUpon>
-    </ClCompile>
     <ClCompile Include="SettingsCard.cpp">
       <DependentUpon>SettingsCard.idl</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="SettingResetButton.cpp">
+      <DependentUpon>SettingResetButton.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="SettingsExpander.cpp">
       <DependentUpon>SettingsExpander.idl</DependentUpon>
@@ -469,10 +469,6 @@
       <DependentUpon>Compatibility.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Midl>
-    <Midl Include="Rendering.idl">
-      <DependentUpon>Rendering.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
     <Midl Include="SearchIndex.idl" />
     <Midl Include="MainPage.idl">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -486,7 +482,6 @@
       <DependentUpon>Profiles.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Midl>
-    <Midl Include="RenderingViewModel.idl" />
     <Midl Include="InteractionViewModel.idl" />
     <Midl Include="GlobalAppearanceViewModel.idl" />
     <Midl Include="LaunchViewModel.idl" />
@@ -511,6 +506,10 @@
       <DependentUpon>Profiles_Appearance.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Midl>
+    <Midl Include="Profiles_UnfocusedAppearance.idl">
+      <DependentUpon>Profiles_UnfocusedAppearance.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
     <Midl Include="Profiles_Terminal.idl">
       <DependentUpon>Profiles_Terminal.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -520,6 +519,9 @@
       <SubType>Code</SubType>
     </Midl>
     <Midl Include="SettingsCard.idl">
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="SettingResetButton.idl">
       <SubType>Code</SubType>
     </Midl>
     <Midl Include="SettingsExpander.idl">
