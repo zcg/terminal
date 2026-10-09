@@ -71,14 +71,18 @@
 选项卡栏不再固定在顶部。你可以把它移到窗口**底部**，或者移到**左侧**、**右侧** —— 放在侧面时
 它会变成竖向列表，选项卡开得多的时候特别顺手。
 
+| 左侧（垂直） | 右侧（垂直） |
+|:---:|:---:|
+| ![选项卡栏在左侧](doc/fork-screenshots/tab-bar-left.jpg) | ![选项卡栏在右侧](doc/fork-screenshots/tab-bar-right.jpg) |
+
 **怎么用：** 打开 **设置** > **外观** > **选项卡栏位置**，选择 `顶部`、`底部`、`左侧（垂直）`
-或 `右侧（垂直）`。在 `settings.json` 里这个选项叫 `tabPosition`。
+或 `右侧（垂直）`。在 `settings.json` 里这个选项叫 `tabPosition`。下面这张截图里选的是
+`底部`，窗口的选项卡栏已经移到了底部。
+
+![选项卡栏位置设置](doc/fork-screenshots/tab-bar-setting.jpg)
 
 另外还有一个 `toggleVerticalTabs` 动作，如果你更喜欢用快捷键，可以给它绑一个键，按一下就能在
 横向和竖向之间切换（默认没有绑定任何按键）。
-
-<!-- SCREENSHOT: 选项卡栏位置 -->
-> _[截图位置：选项卡栏位置]_
 
 ### 窗口背景材质
 
@@ -89,12 +93,11 @@
 `默认`、`纯色`、`Mica`、`Mica Alt`、`亚克力`、`亚克力（深色）`。
 在 `settings.json` 里这个选项叫 `applicationBackgroundMaterial`。
 
+![应用程序背景材质设置](doc/fork-screenshots/window-material.jpg)
+
 > 这个设置只作用于窗口、选项卡栏和设置界面，不会改变终端内容区。如果你希望终端内容也跟着
 > 窗口材质走，把配置文件的「终端背景材质」设为「使用窗口材质」即可
 > （对应 `backgroundMaterial` 的 `useWindowMaterial`）。
-
-<!-- SCREENSHOT: 窗口背景材质 -->
-> _[截图位置：窗口背景材质]_
 
 ### 透明窗口不再残留字影
 

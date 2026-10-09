@@ -79,16 +79,20 @@ The tab strip is no longer stuck at the top. You can move it to the **bottom** o
 the window, or to the **left** or **right** side, where it turns into a vertical
 list — much easier to scan when you have a lot of tabs open.
 
+| Left (vertical) | Right (vertical) |
+|:---:|:---:|
+| ![Tab bar on the left](doc/fork-screenshots/tab-bar-left.jpg) | ![Tab bar on the right](doc/fork-screenshots/tab-bar-right.jpg) |
+
 **How to use it:** open **Settings** > **Appearance** > **Tab bar position** and
 pick `Top`, `Bottom`, `Left (vertical)` or `Right (vertical)`. The same option is
-called `tabPosition` in `settings.json`.
+called `tabPosition` in `settings.json`. The screenshot below has `Bottom`
+selected, and the tab strip has already moved to the bottom of the window.
+
+![Tab bar position setting](doc/fork-screenshots/tab-bar-setting.jpg)
 
 There is also a `toggleVerticalTabs` action if you would rather use a shortcut:
 bind it to a key of your choice and press it to flip between the horizontal and
 vertical layouts. It has no default shortcut.
-
-<!-- SCREENSHOT: tab bar position -->
-> _[Screenshot: tab bar position]_
 
 ### Window background material
 
@@ -101,8 +105,12 @@ material** and pick a style. The choices are `Default`, `Solid`, `Mica`,
 `Mica Alt`, `Acrylic` and `Acrylic Dark`. The same option is called
 `applicationBackgroundMaterial` in `settings.json`.
 
-<!-- SCREENSHOT: window background material -->
-> _[Screenshot: window background material]_
+![Application background material setting](doc/fork-screenshots/window-material.jpg)
+
+> This setting only affects the window, the tab row and the settings UI. It does
+> not change the terminal content area. If you want the content to share the
+> window backdrop, set the profile's terminal background material to
+> "Use window material" (`backgroundMaterial` set to `useWindowMaterial`).
 
 ### No more ghost characters in transparent windows
 
