@@ -10,6 +10,7 @@
 
 > [!IMPORTANT]
 > **本仓库是 Windows Terminal 的个人魔改分支。** 它跟随上游 `main` 分支，并在其之上加入了一批额外的功能与修复。
+> 它会**与官方的 Windows Terminal 并存**安装，不会覆盖或替换官方版本，两者可以同时使用。
 > 想快速了解改了什么，请看下面的[本版本有什么不同](#本版本有什么不同)；想直接装来用，请看[下载与安装](#下载与安装)，
 > 到 Releases 页面下载现成的安装包即可。Click the **English** button at the top right to read this page in English.
 
@@ -18,14 +19,6 @@
 
 - [本版本有什么不同](#本版本有什么不同)
 - [下载与安装](#下载与安装)
-- [安装并运行 Windows Terminal](#安装并运行-windows-terminal)
-  - [Microsoft Store【推荐】](#microsoft-store推荐)
-  - [其他安装方式](#其他安装方式)
-    - [通过 GitHub](#通过-github)
-    - [通过 Windows 包管理器命令行（winget）](#通过-windows-包管理器命令行winget)
-    - [通过 Chocolatey（非官方）](#通过-chocolatey非官方)
-    - [通过 Scoop（非官方）](#通过-scoop非官方)
-- [安装 Windows Terminal Canary](#安装-windows-terminal-canary)
 - [Terminal 与控制台概览](#terminal-与控制台概览)
   - [Windows Terminal](#windows-terminal)
   - [Windows 控制台宿主](#windows-控制台宿主)
@@ -150,143 +143,41 @@
 
 ## 下载与安装
 
-体验这个版本最快的方式，是直接到 [Releases 页面](../../releases) 下载现成的安装包。
-你不需要装 Visual Studio，也不需要编译任何东西。
+这个版本**只有一条安装路径**：到 [Releases 页面](../../releases) 下载压缩包，从压缩包里安装。
+它没有上架微软应用商店，也不在 winget、Chocolatey、Scoop 里 —— 那些装的是微软的官方版本，
+不是这个。
 
-1. 打开[最新版本](../../releases/latest)，在 **Assets** 里下载 `.msixbundle` 文件
-   （例如 `CascadiaPackage_0.0.89.0_x64.msixbundle`），以及配套的 `.cer` 证书文件。
-2. 先信任一次证书。右键点击 `.cer` 文件，选择 **安装证书**，选择 **本地计算机**，然后选
-   **将所有的证书都放入下列存储** > **浏览** > **受信任人**，按向导完成即可。
-3. 双击 `.msixbundle`，按提示安装。
+1. 打开[最新版本](../../releases/latest)，在 **Assets** 里下载
+   `WindowsTerminal-Dev-<版本>-x64.zip`。
+2. 解压到任意位置。
+3. 在 PowerShell 中进入解压出来的目录，运行 `.\Add-AppDevPackage.ps1`。
+   它会依次完成：信任证书 → 安装框架依赖 → 安装主程序。
 
-如果双击没有反应，可以在 PowerShell 里手动安装：
+如果 PowerShell 不允许运行脚本，先为当前会话放开限制：
 
 ```powershell
-Add-AppxPackage .\CascadiaPackage_0.0.89.0_x64.msixbundle
+Set-ExecutionPolicy -Scope Process Bypass
 ```
 
-这个包的名称为 **Windows Terminal Dev**，因此它会**与**商店版的 Windows Terminal **并存**安装，
-而不是覆盖它。两个版本可以同时保留；想卸载时，到 **设置** > **应用** > **已安装的应用** 里
-删除即可。
+### 手动安装
+
+如果你更想一步步自己来，顺序很重要 —— 框架依赖必须先装好：
+
+1. 信任证书：右键点击 `.cer` 文件，选择 **安装证书**，选择 **本地计算机**，然后选
+   **将所有的证书都放入下列存储** > **浏览** > **受信任人**。
+2. 安装依赖：`Add-AppxPackage .\Dependencies\x64\Microsoft.UI.Xaml.2.8.appx`
+   （系统已有 Microsoft.UI.Xaml 2.8 可跳过）。
+3. 安装主程序：`Add-AppxPackage .\CascadiaPackage_<版本>_x64.msixbundle`
+
+> [!IMPORTANT]
+> **这个版本会与官方的 Windows Terminal 并存安装，不会覆盖或替换它。** 两者可以同时安装、
+> 同时使用，设置也各自独立、互不影响。在开始菜单里它叫 **Terminal Dev**，图标右下角带一个
+> 绿色的 **DEV** 角标，一眼就能区分。想卸载时，到 **设置** > **应用** > **已安装的应用** 里
+> 删除即可，官方版本不受影响。
 
 > [!NOTE]
-> 这个包使用的是自行签名的测试证书，而不是微软商店的证书，所以第 2 步是必须的。
+> 这个包使用的是自行签名的测试证书，而不是微软商店的证书，所以证书那一步是必须的。
 > 只有在你能够接受信任一张由打包机器自行生成的证书时，才建议安装。
-
----
-
-## 安装并运行 Windows Terminal
-
-> [!NOTE]
-> Windows Terminal 需要 Windows 10 2004（内部版本 19041）或更高版本
-
-### Microsoft Store【推荐】
-
-从 [Microsoft Store 安装 Windows Terminal][store-install-link]。
-这样可以始终使用最新版本，并享受自动升级。
-
-这是我们最推荐的方式。
-
-### 其他安装方式
-
-#### 通过 GitHub
-
-如果无法从 Microsoft Store 安装，可以到本仓库的
-[Releases 页面](https://github.com/microsoft/terminal/releases) 手动下载已发布的版本。
-
-在 **Assets** 区域下载 `Microsoft.WindowsTerminal_<版本号>.msixbundle` 文件。安装时直接双击
-`.msixbundle` 文件即可，应用安装程序会自动运行。如果由于某种原因失败，可以在 PowerShell 提示符
-下尝试下面的命令：
-
-```powershell
-# 注意：如果你使用的是 PowerShell 7+，请先运行
-# Import-Module Appx -UseWindowsPowerShell
-# 然后再使用 Add-AppxPackage。
-
-Add-AppxPackage Microsoft.WindowsTerminal_<版本号>.msixbundle
-```
-
-> [!NOTE]
-> 如果你手动安装 Terminal：
->
-> * 可能需要安装 [VC++ v14 桌面框架包](https://learn.microsoft.com/troubleshoot/cpp/c-runtime-packages-desktop-bridge#how-to-install-and-update-desktop-framework-packages)。
->   这通常只在较旧的 Windows 10 版本上、并且只有当你看到缺少框架包的错误时才需要。
-> * Terminal 不会在新版本发布时自动更新，因此需要你定期手动安装最新的 Terminal 版本，
->   才能获得全部最新的修复与改进！
-
-#### 通过 Windows 包管理器命令行（winget）
-
-[winget](https://github.com/microsoft/winget-cli) 用户可以安装 `Microsoft.WindowsTerminal`
-包来获取最新的 Terminal 版本：
-
-```powershell
-winget install --id Microsoft.WindowsTerminal -e
-```
-
-> [!NOTE]
-> 依赖支持需要 WinGet [1.6.2631 或更高版本](https://github.com/microsoft/winget-cli/releases)。要安装 Terminal 1.18 或更高版本的稳定版，请确认你的 WinGet 客户端已经更新。
-
-#### 通过 Chocolatey（非官方）
-
-[Chocolatey](https://chocolatey.org) 用户可以安装 `microsoft-windows-terminal` 包来获取
-最新的 Terminal 版本：
-
-```powershell
-choco install microsoft-windows-terminal
-```
-
-使用 Chocolatey 升级 Windows Terminal：
-
-```powershell
-choco upgrade microsoft-windows-terminal
-```
-
-如果在安装或升级该包时遇到问题，请到
-[Windows Terminal 包页面](https://chocolatey.org/packages/microsoft-windows-terminal)，
-并按照 [Chocolatey 问题排查流程](https://chocolatey.org/docs/package-triage-process) 处理。
-
-#### 通过 Scoop（非官方）
-
-[Scoop](https://scoop.sh) 用户可以安装 `windows-terminal` 包来获取最新的 Terminal 版本：
-
-```powershell
-scoop bucket add extras
-scoop install windows-terminal
-```
-
-使用 Scoop 更新 Windows Terminal：
-
-```powershell
-scoop update windows-terminal
-```
-
-如果在安装或更新该包时遇到问题，请到 Scoop Extras bucket 仓库的
-[issues 页面](https://github.com/lukesampson/scoop-extras/issues) 搜索或反馈。
-
----
-
-## 安装 Windows Terminal Canary
-
-Windows Terminal Canary 是 Windows Terminal 的每夜构建版本。它包含我们 `main` 分支上的最新代码，
-让你有机会在功能进入 Windows Terminal 预览版之前抢先体验。
-
-Windows Terminal Canary 是我们最不稳定的版本，因此你可能会在我们发现之前就先遇到 bug。
-
-Windows Terminal Canary 提供应用安装程序分发和便携 ZIP 分发两种形式。
-
-应用安装程序分发支持自动更新。受平台限制，该安装程序只能在 Windows 11 上使用。
-
-便携 ZIP 分发是便携应用，不会自动更新，也不会自动检查更新。它可以在 Windows 10（19041+）
-和 Windows 11 上使用。
-
-| 分发形式       | 架构            | 链接                                                 |
-|----------------|:---------------:|------------------------------------------------------|
-| 应用安装程序   | x64, arm64, x86 | [下载](https://aka.ms/terminal-canary-installer)      |
-| 便携 ZIP       | x64             | [下载](https://aka.ms/terminal-canary-zip-x64)        |
-| 便携 ZIP       | ARM64           | [下载](https://aka.ms/terminal-canary-zip-arm64)      |
-| 便携 ZIP       | x86             | [下载](https://aka.ms/terminal-canary-zip-x86)        |
-
-_进一步了解 [Windows Terminal 的各种分发形式](https://learn.microsoft.com/windows/terminal/distributions)。_
 
 ---
 
@@ -339,8 +230,8 @@ Windows 控制台宿主 `conhost.exe` 是 Windows 最早的命令行体验。它
 同时服务于现有的控制台和新的 Terminal。此外我们还意识到，这使我们能够把 Terminal 的核心
 本身构建成一个可复用的 UI 控件，供其他人集成进自己的应用。
 
-这项工作的成果就在本仓库中，并以 Windows Terminal 应用的形式发布 —— 你可以从 Microsoft Store
-下载，或者[直接从本仓库的 Releases 页面下载](https://github.com/microsoft/terminal/releases)。
+这项工作的成果就在本仓库中，并以 Windows Terminal 应用的形式发布 —— 对本分支而言，就是
+[本仓库 Releases 页面](../../releases) 上的安装包。
 
 ---
 
@@ -492,4 +383,3 @@ Terminal 无法以 "Any CPU" 编译（因为 Terminal 是 C++ 应用，不是 C#
 [conduct-code]: https://opensource.microsoft.com/codeofconduct/
 [conduct-FAQ]: https://opensource.microsoft.com/codeofconduct/faq/
 [conduct-email]: mailto:opencode@microsoft.com
-[store-install-link]: https://aka.ms/terminal
