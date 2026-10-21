@@ -558,13 +558,13 @@
     <value>通过拖动重新排列或拖出选项卡</value>
     <comment>Header for a control to toggle whether tabs can be dragged to reorder them or tear them out into a new window.</comment>
   </data>
-  <data name="Globals_EnableTabDragDrop_StatefulHelpText" xml:space="preserve">
+  <data name="Globals_EnableTabDragDrop_Description" xml:space="preserve">
     <value>禁用后，仍可通过“移动选项卡”操作移动选项卡。</value>
     <comment>A description for what the "reorder and tear out tabs by dragging" setting does. Presented near "Globals_EnableTabDragDrop.Header".</comment>
   </data>
   <data name="Globals_EnableTabDragDrop_Unavailable" xml:space="preserve">
     <value>由于终端正在以管理员身份或其他用户身份运行（此时拖动选项卡会导致窗口崩溃），因此无法拖动选项卡。请改用“移动选项卡”操作。</value>
-    <comment>Shown in place of the help text when the "reorder and tear out tabs by dragging" setting is disabled because the operating system would not allow tab dragging in this session.</comment>
+    <comment>Shown in place of the description when the "reorder and tear out tabs by dragging" setting is disabled because the operating system would not allow tab dragging in this session.</comment>
   </data>
   <data name="Globals_SnapToGridOnResize.Header" xml:space="preserve">
     <value>将窗口大小调整为字符网格对齐</value>

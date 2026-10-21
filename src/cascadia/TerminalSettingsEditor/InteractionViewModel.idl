@@ -40,6 +40,6 @@ namespace Microsoft.Terminal.Settings.Editor
         Boolean CanEnableTabDragDrop { get; };
         // Help text for the EnableTabDragDrop control that explains why it is
         // disabled when CanEnableTabDragDrop is false.
-        String TabDragDropStatefulHelpText { get; };
+        String TabDragDropDescription { get; };
     }
 }

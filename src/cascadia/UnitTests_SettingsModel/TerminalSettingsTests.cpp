@@ -62,7 +62,7 @@ namespace SettingsModelUnitTests
         const auto createSettings = [](const std::string_view json) {
             const auto settings = winrt::make_self<implementation::CascadiaSettings>(json);
             const auto profile = settings->ActiveProfiles().GetAt(0);
-            return TerminalSettings::CreateWithProfile(*settings, profile).DefaultSettings();
+            return TerminalSettings::CreateWithProfile(*settings, settings->WindowSettingsDefaults(), profile).DefaultSettings();
         };
 
         static constexpr std::string_view defaultJson{ R"({

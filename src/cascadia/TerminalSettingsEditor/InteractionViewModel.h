@@ -36,8 +36,13 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(_GlobalSettings, EnableColorSelection);
         PERMANENT_OBSERVABLE_PROJECTED_SETTING(_WindowSettings, EnableTabDragDrop);
 
+        // Grey out the toggle when the OS refuses drag/drop anyway (elevated or
+        // running as a different user); used to disable the EnableTabDragDrop
+        // control. See Utils::CanUwpDragDrop. GH#15689.
         bool CanEnableTabDragDrop() const noexcept;
-        winrt::hstring TabDragDropStatefulHelpText() const;
+        // Help text for the EnableTabDragDrop control that explains why it is
+        // disabled when CanEnableTabDragDrop is false.
+        winrt::hstring TabDragDropDescription() const;
 
     private:
         Model::GlobalAppSettings _GlobalSettings;

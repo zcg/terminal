@@ -31,15 +31,15 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     }
 
     // Explain why the toggle is greyed out when drag/drop is unavailable.
-    winrt::hstring InteractionViewModel::TabDragDropStatefulHelpText() const
+    winrt::hstring InteractionViewModel::TabDragDropDescription() const
     {
         if (!::Microsoft::Console::Utils::CanUwpDragDrop())
         {
             return RS_(L"Globals_EnableTabDragDrop_Unavailable");
         }
-        // NOTE: deliberately NOT a dotted ".HelpText" key -- an x:Uid'd SettingsCard
-        // would try to apply a dotted key as a property and throw, since
-        // SettingsCard has no HelpText property.
-        return RS_(L"Globals_EnableTabDragDrop_StatefulHelpText");
+        // NOTE: deliberately NOT a dotted ".Description" key -- an x:Uid'd
+        // SettingsCard applies dotted keys as properties, and this one is bound
+        // explicitly via SettingsCard.Description above instead.
+        return RS_(L"Globals_EnableTabDragDrop_Description");
     }
 }

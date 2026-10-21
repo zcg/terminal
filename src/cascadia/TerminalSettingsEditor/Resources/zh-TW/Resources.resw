@@ -558,13 +558,13 @@
     <value>透過拖曳重新排列或拖出索引標籤</value>
     <comment>Header for a control to toggle whether tabs can be dragged to reorder them or tear them out into a new window.</comment>
   </data>
-  <data name="Globals_EnableTabDragDrop_StatefulHelpText" xml:space="preserve">
+  <data name="Globals_EnableTabDragDrop_Description" xml:space="preserve">
     <value>停用後，仍可透過「移動索引標籤」動作移動索引標籤。</value>
     <comment>A description for what the "reorder and tear out tabs by dragging" setting does. Presented near "Globals_EnableTabDragDrop.Header".</comment>
   </data>
   <data name="Globals_EnableTabDragDrop_Unavailable" xml:space="preserve">
     <value>由於終端機正以系統管理員身分或其他使用者身分執行（此時拖曳索引標籤會導致視窗當機），因此無法拖曳索引標籤。請改用「移動索引標籤」動作。</value>
-    <comment>Shown in place of the help text when the "reorder and tear out tabs by dragging" setting is disabled because the operating system would not allow tab dragging in this session.</comment>
+    <comment>Shown in place of the description when the "reorder and tear out tabs by dragging" setting is disabled because the operating system would not allow tab dragging in this session.</comment>
   </data>
   <data name="Globals_SnapToGridOnResize.Header" xml:space="preserve">
     <value>將視窗大小調整為字元格線</value>
