@@ -231,6 +231,7 @@ namespace winrt::TerminalApp::implementation
         FORWARDED_TYPED_EVENT(FocusTabRequested, Windows::Foundation::IInspectable, winrt::TerminalApp::Tab, _root, FocusTabRequested);
         FORWARDED_TYPED_EVENT(OpenSystemMenu, Windows::Foundation::IInspectable, Windows::Foundation::IInspectable, _root, OpenSystemMenu);
         FORWARDED_TYPED_EVENT(QuitRequested, Windows::Foundation::IInspectable, Windows::Foundation::IInspectable, _root, QuitRequested);
+        FORWARDED_TYPED_EVENT(TabsChanged, Windows::Foundation::IInspectable, Windows::Foundation::IInspectable, _root, TabsChanged);
         FORWARDED_TYPED_EVENT(ShowWindowChanged, Windows::Foundation::IInspectable, winrt::Microsoft::Terminal::Control::ShowWindowArgs, _root, ShowWindowChanged);
 
         FORWARDED_TYPED_EVENT(RequestMoveContent, Windows::Foundation::IInspectable, winrt::TerminalApp::RequestMoveContentArgs, _root, RequestMoveContent);

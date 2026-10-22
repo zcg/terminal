@@ -138,6 +138,10 @@ namespace TerminalApp
         event Windows.Foundation.TypedEventHandler<Object, TerminalApp.Tab> FocusTabRequested;
         event Windows.Foundation.TypedEventHandler<Object, Object> OpenSystemMenu;
         event Windows.Foundation.TypedEventHandler<Object, Object> QuitRequested;
+        // Raised when the set of tabs in this window changed (a tab was opened
+        // or closed). Lets the window manager refresh the persisted layout right
+        // away, so the saved layout is accurate even if the process is killed.
+        event Windows.Foundation.TypedEventHandler<Object, Object> TabsChanged;
         event Windows.Foundation.TypedEventHandler<Object, TerminalApp.SystemMenuChangeArgs> SystemMenuChangeRequested;
         event Windows.Foundation.TypedEventHandler<Object, Microsoft.Terminal.Control.ShowWindowArgs> ShowWindowChanged;
         event Windows.Foundation.TypedEventHandler<Object, Microsoft.Terminal.Control.WindowSizeChangedEventArgs> WindowSizeChanged;

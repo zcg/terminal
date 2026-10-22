@@ -2816,6 +2816,15 @@ namespace winrt::TerminalApp::implementation
             return nullptr;
         }
 
+        // The quake window is a dedicated, always-alive window summoned by a
+        // global hotkey. It is not part of the "windows the user had open" set:
+        // saving it would push the real windows out of the restore list and
+        // resurrect a quake window that the hotkey already owns.
+        if (WindowProperties().IsQuakeWindow())
+        {
+            return nullptr;
+        }
+
         std::vector<ActionAndArgs> actions;
 
         for (auto tab : _tabs)

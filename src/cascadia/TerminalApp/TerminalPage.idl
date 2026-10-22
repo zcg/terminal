@@ -127,6 +127,11 @@ namespace TerminalApp
         event Windows.Foundation.TypedEventHandler<Object, LaunchPositionRequest> RequestLaunchPosition;
         event Windows.Foundation.TypedEventHandler<Object, WindowListRequest> RequestWindowList;
 
+        // Raised when the set of tabs changed (a tab was opened or closed), so
+        // the persisted window layout can be refreshed immediately rather than
+        // on a timer.
+        event Windows.Foundation.TypedEventHandler<Object, Object> TabsChanged;
+
         // Raised when the page wants the monarch to open (or summon) a
         // named window in-process, restoring its persisted workspace if
         // one exists. No new wt.exe process is spawned.

@@ -314,6 +314,14 @@ void AppHost::Initialize()
 
     _revokers.TitleChanged = _windowLogic.TitleChanged(winrt::auto_revoke, { this, &AppHost::_AppTitleChanged });
     _revokers.CloseWindowRequested = _windowLogic.CloseWindowRequested(winrt::auto_revoke, { this, &AppHost::_CloseRequested });
+    // A tab was opened or closed in this window: refresh the persisted layout
+    // now so that killing the process still restores the current tabs.
+    _revokers.TabsChanged = _windowLogic.TabsChanged(winrt::auto_revoke, [this](auto&&, auto&&) {
+        if (_windowManager)
+        {
+            _windowManager->RequestStatePersist();
+        }
+    });
     _revokers.SetTaskbarProgress = _windowLogic.SetTaskbarProgress(winrt::auto_revoke, { this, &AppHost::SetTaskbarProgress });
     _revokers.IdentifyWindowsRequested = _windowLogic.IdentifyWindowsRequested(winrt::auto_revoke, { this, &AppHost::_IdentifyWindowsRequested });
     _revokers.WindowSizeChanged = _windowLogic.WindowSizeChanged(winrt::auto_revoke, { this, &AppHost::_WindowSizeChanged });

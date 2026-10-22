@@ -11,8 +11,12 @@ namespace Microsoft::Terminal::MaterialHelpers
     using TerminalBackgroundMaterial = winrt::Microsoft::Terminal::Settings::Model::TerminalBackgroundMaterial;
 
     inline constexpr winrt::Windows::UI::Color AcrylicDarkSolidTint{ 0xff, 0x28, 0x28, 0x28 };
-    inline constexpr winrt::Windows::UI::Color AcrylicDarkOverlayTint{ 0xb8, 0x28, 0x28, 0x28 };
-    inline constexpr float AcrylicDarkTintOpacity = 0.65f;
+    // Alpha is the whole story here: this solid overlay is painted over the DWM
+    // acrylic, so 0xb8 (72% black) read as nearly opaque. 0x66 keeps it dark but
+    // lets the backdrop through.
+    inline constexpr winrt::Windows::UI::Color AcrylicDarkOverlayTint{ 0x66, 0x28, 0x28, 0x28 };
+    // Only used by the XAML-acrylic path (plain Acrylic), not by AcrylicDark.
+    inline constexpr float AcrylicDarkTintOpacity = 0.45f;
     inline constexpr float AcrylicDefaultTintOpacity = 0.5f;
 
     template<typename ThemeT>

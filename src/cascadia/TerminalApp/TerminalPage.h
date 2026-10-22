@@ -249,6 +249,9 @@ namespace winrt::TerminalApp::implementation
 
         til::typed_event<IInspectable, IInspectable> OpenSystemMenu;
         til::typed_event<IInspectable, IInspectable> QuitRequested;
+        // Raised when a tab was opened or closed, so the window layer can
+        // refresh the persisted layout immediately instead of on a timer.
+        til::typed_event<IInspectable, IInspectable> TabsChanged;
         til::typed_event<IInspectable, winrt::Microsoft::Terminal::Control::ShowWindowArgs> ShowWindowChanged;
         til::typed_event<Windows::Foundation::IInspectable, Windows::Foundation::Collections::IVectorView<winrt::Microsoft::Terminal::Settings::Model::SettingsLoadWarnings>> ShowLoadWarningsDialog;
 

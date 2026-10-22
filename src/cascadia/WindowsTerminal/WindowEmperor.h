@@ -49,6 +49,10 @@ public:
     void FocusTabInAnyWindow(const winrt::TerminalApp::Tab& tab) const;
     // OpenWindow is used for opening a new window or summoning an existing window by name.
     void OpenWindow(const winrt::hstring& name);
+    // Refresh the persisted window layout after the set of tabs in one of our
+    // windows changed. Cheap to call on every tab open/close; writes are
+    // debounced.
+    void RequestStatePersist();
 
 private:
     struct SummonWindowSelectionArgs
@@ -80,6 +84,14 @@ private:
     void _unregisterHotKey(int index) noexcept;
     void _setupGlobalHotkeys();
     void _setupSessionPersistence(bool enabled);
+    // Number of windows the user would call "mine", i.e. excluding the quake
+    // window. The quake window is hidden rather than destroyed when dismissed,
+    // so it stays in _windows() and would otherwise keep the process alive and
+    // make "last window closed" tests never fire.
+    int32_t _userWindowCount() const;
+    // Reopen the windows described by the persisted layout, honoring the
+    // "launch behavior" setting. Returns true if at least one was reopened.
+    bool _restorePersistedWindows(wil::zwstring_view cwd, wil::zwstring_view env, uint32_t showWindowCommand);
     void _persistState(const winrt::Microsoft::Terminal::Settings::Model::ApplicationState& state) const;
     void _finalizeSessionPersistence() const;
     void _checkWindowsForNotificationIcon();
@@ -95,7 +107,10 @@ private:
     bool _notificationIconShown = false;
     bool _skipPersistence = false;
     bool _needsPersistenceCleanup = false;
-    SafeDispatcherTimer _persistStateTimer;
+    // Debounce for RequestStatePersist(). Persistence is event-driven (a tab
+    // opening or closing raises TabsChanged), so this only coalesces the burst
+    // of events that restoring a layout produces.
+    SafeDispatcherTimer _persistStateDebounce;
     SafeDispatcherTimer _handoffTimeoutTimer;
     std::optional<bool> _currentSystemThemeIsDark;
     int32_t _windowCount = 0;

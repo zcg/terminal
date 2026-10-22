@@ -133,6 +133,11 @@ namespace winrt::TerminalApp::implementation
         // Give the tab its index in the _tabs vector so it can manage its own SwitchToTab command.
         _UpdateTabIndices();
 
+        // The set of tabs changed, so the persisted window layout is now stale.
+        // Tell the window layer to refresh it right away, so the saved layout
+        // stays accurate even if the process is killed.
+        TabsChanged.raise(*this, nullptr);
+
         // Hookup our event handlers to the new terminal
         _RegisterTabEvents(*newTabImpl);
 
@@ -573,7 +578,15 @@ namespace winrt::TerminalApp::implementation
             // we are missing and remove us that way otherwise.
             CloseWindowRequested.raise(*this, nullptr);
         }
-        else if (focusedTabIndex.has_value() && focusedTabIndex.value() == gsl::narrow_cast<uint32_t>(tabIndex))
+        else
+        {
+            // A tab went away and tabs remain, so the persisted window layout is
+            // stale. Refresh it now so a later kill still restores the current
+            // set of tabs.
+            TabsChanged.raise(*this, nullptr);
+        }
+
+        if (_tabs.Size() != 0 && focusedTabIndex.has_value() && focusedTabIndex.value() == gsl::narrow_cast<uint32_t>(tabIndex))
         {
             // Manually select the new tab to get focus, rather than relying on TabView since:
             // 1. We want to customize this behavior (e.g., use MRU logic)

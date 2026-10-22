@@ -161,6 +161,7 @@ private:
         winrt::TerminalApp::TerminalWindow::ChangeMaximizeRequested_revoker ChangeMaximizeRequested;
         winrt::TerminalApp::TerminalWindow::TitleChanged_revoker TitleChanged;
         winrt::TerminalApp::TerminalWindow::CloseWindowRequested_revoker CloseWindowRequested;
+        winrt::TerminalApp::TerminalWindow::TabsChanged_revoker TabsChanged;
         winrt::TerminalApp::TerminalWindow::SetTaskbarProgress_revoker SetTaskbarProgress;
         winrt::TerminalApp::TerminalWindow::IdentifyWindowsRequested_revoker IdentifyWindowsRequested;
         winrt::TerminalApp::TerminalWindow::IsQuakeWindowChanged_revoker IsQuakeWindowChanged;

@@ -580,20 +580,7 @@ void WindowEmperor::HandleCommandlineArgs(int nCmdShow)
         const auto showCmd = gsl::narrow_cast<uint32_t>(nCmdShow);
 
         // Restore persisted windows.
-        const auto state = ApplicationState::SharedInstance();
-        const auto layouts = state.PersistedWindowLayouts();
-        if (layouts && layouts.Size() > 0)
-        {
-            _needsPersistenceCleanup = true;
-
-            uint32_t startIdx = 0;
-            for (const auto layout : layouts)
-            {
-                hstring args[] = { L"wt", L"-w", L"new", L"-s", winrt::to_hstring(startIdx) };
-                _dispatchCommandlineCommon(args, cwd, env, showCmd);
-                startIdx += 1;
-            }
-        }
+        _restorePersistedWindows(cwd, env, showCmd);
 
         const auto args = commandlineToArgArray(GetCommandLineW());
 
@@ -1082,7 +1069,7 @@ void WindowEmperor::_postQuitMessageIfNeeded() const
 {
     if (
         _messageBoxCount <= 0 &&
-        _windowCount <= 0 &&
+        _userWindowCount() <= 0 &&
         !_app.Logic().Settings().GlobalSettings().AllowHeadless())
     {
         PostQuitMessage(0);
@@ -1120,68 +1107,78 @@ LRESULT WindowEmperor::_messageHandler(HWND window, UINT const message, WPARAM c
         {
         case WM_CLOSE_TERMINAL_WINDOW:
         {
-            const auto globalSettings = _app.Logic().Settings().GlobalSettings();
-            // Keep the last window in the array so that we can persist it on exit.
-            // We check for AllowHeadless(), as that being true prevents us from ever quitting in the first place.
-            // (= If we avoided closing the last window you wouldn't be able to reach a headless state.)
-            const auto shouldKeepWindow =
-                _windows.size() == 1 &&
-                globalSettings.ShouldUsePersistedLayout() &&
-                !globalSettings.AllowHeadless();
+            // Did the window counter get out of sync? It shouldn't.
+            assert(_windowCount == gsl::narrow_cast<int32_t>(_windows.size()));
 
-            if (!shouldKeepWindow)
+            // !!! NOTE !!!
+            // At least theoretically the lParam pointer may be invalid.
+            // We should only access it if we find it in our _windows array.
+            const auto host = reinterpret_cast<AppHost*>(lParam);
+            auto it = _windows.begin();
+            const auto end = _windows.end();
+
+            for (; it != end; ++it)
             {
-                // Did the window counter get out of sync? It shouldn't.
-                assert(_windowCount == gsl::narrow_cast<int32_t>(_windows.size()));
-
-                // !!! NOTE !!!
-                // At least theoretically the lParam pointer may be invalid.
-                // We should only access it if we find it in our _windows array.
-                const auto host = reinterpret_cast<AppHost*>(lParam);
-                auto it = _windows.begin();
-                const auto end = _windows.end();
-
-                for (; it != end; ++it)
+                if (host == it->get())
                 {
-                    if (host == it->get())
-                    {
-                        // NOTE: AppHost::Close is highly non-trivial.
-                        //
-                        // It _may_ call into XAML, which _may_ pump the message loop, which would then recursively
-                        // re-enter this function, which _may_ then handle another WM_CLOSE_TERMINAL_WINDOW,
-                        // which would change the _windows array, and invalidate our iterator and crash.
-                        //
-                        // We can prevent this by deferring Close() until after the erase() call.
-                        //
-                        // Wrapping it in an exception handler will prevent us from losing track of the window count, at
-                        // the perceived cost of leaking all the resources. However, the resources were being leaked
-                        // anyway (since we threw and exited this message handler) so this at least gives back our
-                        // deterministic window count management.
-                        const auto strong = *it;
+                    // NOTE: AppHost::Close is highly non-trivial.
+                    //
+                    // It _may_ call into XAML, which _may_ pump the message loop, which would then recursively
+                    // re-enter this function, which _may_ then handle another WM_CLOSE_TERMINAL_WINDOW,
+                    // which would change the _windows array, and invalidate our iterator and crash.
+                    //
+                    // We can prevent this by deferring Close() until after the erase() call.
+                    //
+                    // Wrapping it in an exception handler will prevent us from losing track of the window count, at
+                    // the perceived cost of leaking all the resources. However, the resources were being leaked
+                    // anyway (since we threw and exited this message handler) so this at least gives back our
+                    // deterministic window count management.
+                    const auto strong = *it;
 
-                        // Before destroying a named window, persist its full
-                        // tab/buffer state as a workspace so it can be restored later.
-                        try
+                    // Before destroying a named window, persist its full
+                    // tab/buffer state as a workspace so it can be restored later.
+                    try
+                    {
+                        const auto windowName = strong->Logic().WindowProperties().WindowName();
+                        if (!windowName.empty())
                         {
-                            const auto windowName = strong->Logic().WindowProperties().WindowName();
-                            if (!windowName.empty())
+                            if (const auto layout = strong->Logic().GetWindowLayout())
                             {
-                                if (const auto layout = strong->Logic().GetWindowLayout())
-                                {
-                                    ApplicationState::SharedInstance().SaveWorkspace(windowName, layout);
-                                }
+                                ApplicationState::SharedInstance().SaveWorkspace(windowName, layout);
                             }
                         }
-                        CATCH_LOG();
+                    }
+                    CATCH_LOG();
 
-                        _windows.erase(it);
+                    // Record this window's tabs before it leaves _windows.
+                    //
+                    // _persistState() rebuilds the saved layout by walking
+                    // _windows, so once the window is erased it can no longer
+                    // contribute - and if it was the last one the rebuild
+                    // would store an empty list. Persisting here keeps the
+                    // saved layout describing what the user actually had open.
+                    //
+                    // Only when this is the last user window: closing one of
+                    // several is a deliberate dismissal and must not come back
+                    // on the next launch. The quake window does not count - it
+                    // is hidden rather than closed, and its tabs are never
+                    // saved anyway.
+                    if (_userWindowCount() == 1)
+                    {
                         try
                         {
-                            strong->Close();
+                            _persistState(ApplicationState::SharedInstance());
                         }
                         CATCH_LOG();
-                        break;
                     }
+
+                    _windows.erase(it);
+                    try
+                    {
+                        strong->Close();
+                    }
+                    CATCH_LOG();
+                    break;
                 }
             }
 
@@ -1283,7 +1280,29 @@ LRESULT WindowEmperor::_messageHandler(HWND window, UINT const message, WPARAM c
                 // toast's Activated event, so just ignore this handoff.
                 if (argv.size() != 2 || argv[1] != L"--from-toast")
                 {
-                    _dispatchCommandlineCommon(argv, handoff.cwd, handoff.env, handoff.show);
+                    // A handoff means another process handed us its command line.
+                    // With compatibility.allowHeadless the process outlives its
+                    // windows, so a plain "user clicked the icon again" arrives
+                    // here with nothing but the executable name and no window to
+                    // attach to. Honor the "launch behavior" setting for that
+                    // case instead of blindly opening a blank window, which would
+                    // overwrite the saved layout. An explicit command line (e.g.
+                    // another app launching wt.exe with arguments) is always
+                    // dispatched verbatim.
+                    //
+                    // "No window to attach to" means no *user* window: the quake
+                    // window is hidden rather than closed, so it must not make a
+                    // relaunch look like it already has somewhere to go.
+                    auto handled = false;
+                    if (argv.size() == 1 && _userWindowCount() == 0)
+                    {
+                        handled = _restorePersistedWindows(handoff.cwd, handoff.env, handoff.show);
+                    }
+
+                    if (!handled)
+                    {
+                        _dispatchCommandlineCommon(argv, handoff.cwd, handoff.env, handoff.show);
+                    }
                 }
             }
             return 0;
@@ -1327,31 +1346,123 @@ void WindowEmperor::_setupSessionPersistence(bool enabled)
 {
     if (!enabled)
     {
-        _persistStateTimer.Stop();
+        _persistStateDebounce.Stop();
         return;
     }
-    _persistStateTimer.Interval(std::chrono::minutes(5));
-    _persistStateTimer.Tick([&](auto&&, auto&&) {
+
+    // Persistence is event-driven: RequestStatePersist() fires whenever a tab is
+    // opened or closed, so the saved layout trails the window by one debounce
+    // instead of up to five minutes. The debounce only coalesces bursts -
+    // restoring a layout opens several tabs in a row.
+    _persistStateDebounce.Interval(std::chrono::milliseconds(400));
+    _persistStateDebounce.Tick([&](auto&&, auto&&) {
+        _persistStateDebounce.Stop();
         _persistState(ApplicationState::SharedInstance());
     });
-    _persistStateTimer.Start();
+}
+
+void WindowEmperor::RequestStatePersist()
+{
+    if (!_app.Logic().Settings().GlobalSettings().ShouldUsePersistedLayout())
+    {
+        return;
+    }
+
+    // Restart the debounce so a burst of tab events results in a single write.
+    _persistStateDebounce.Stop();
+    _persistStateDebounce.Start();
+}
+
+// Number of windows the user would call "mine", i.e. excluding the quake window.
+// Quake is hidden rather than destroyed when dismissed, so it stays in _windows()
+// and would otherwise make "last window closed" tests never fire.
+int32_t WindowEmperor::_userWindowCount() const
+{
+    int32_t count = 0;
+    for (const auto& w : _windows)
+    {
+        if (const auto logic = w->Logic(); logic && !logic.IsQuakeWindow())
+        {
+            ++count;
+        }
+    }
+    return count;
+}
+
+// Reopen the windows described by the persisted layout, honoring the "launch
+// behavior" setting. Returns true if at least one window was reopened.
+bool WindowEmperor::_restorePersistedWindows(wil::zwstring_view cwd, wil::zwstring_view env, uint32_t showWindowCommand)
+{
+    const auto globalSettings = _app.Logic().Settings().GlobalSettings();
+    if (!globalSettings.ShouldUsePersistedLayout())
+    {
+        // "Open a tab with the default profile" - nothing to restore.
+        return false;
+    }
+
+    const auto state = ApplicationState::SharedInstance();
+    const auto layouts = state.PersistedWindowLayouts();
+    if (!layouts || layouts.Size() == 0)
+    {
+        return false;
+    }
+
+    _needsPersistenceCleanup = true;
+
+    uint32_t startIdx = 0;
+    for (const auto layout : layouts)
+    {
+        hstring args[] = { L"wt", L"-w", L"new", L"-s", winrt::to_hstring(startIdx) };
+        _dispatchCommandlineCommon(args, cwd, env, showWindowCommand);
+        startIdx += 1;
+    }
+
+    return !_windows.empty();
 }
 
 void WindowEmperor::_persistState(const ApplicationState& state) const
 {
+    const auto wantsPersistence = _app.Logic().Settings().GlobalSettings().FirstWindowPreference() != FirstWindowPreference::DefaultProfile;
+
+    if (!wantsPersistence)
+    {
+        // Persistence is off: drop stale state so it cannot resurface later.
+        if (state.PersistedWindowLayouts())
+        {
+            state.PersistedWindowLayouts(nullptr);
+        }
+        state.Flush();
+        return;
+    }
+
+    // The quake window is never part of the saved layout. If it is all we have,
+    // leave the saved layout alone: clearing it would throw away the user's real
+    // windows just because the hotkey window is up.
+    auto anyPersistable = false;
+    for (const auto& w : _windows)
+    {
+        if (const auto logic = w->Logic(); logic && !logic.IsQuakeWindow())
+        {
+            anyPersistable = true;
+            break;
+        }
+    }
+    if (!anyPersistable)
+    {
+        return;
+    }
+
     // Calling an `ApplicationState` setter triggers a write to state.json.
-    // With this if condition we avoid an unnecessary write when persistence is disabled.
     if (state.PersistedWindowLayouts())
     {
         state.PersistedWindowLayouts(nullptr);
     }
 
-    if (_app.Logic().Settings().GlobalSettings().FirstWindowPreference() != FirstWindowPreference::DefaultProfile)
+    // Each window writes itself so the named-window workspace split stays intact
+    // (full layout into the workspace map plus an openWorkspace stub here).
+    for (const auto& w : _windows)
     {
-        for (const auto& w : _windows)
-        {
-            w->Logic().PersistState();
-        }
+        w->Logic().PersistState();
     }
 
     // Ensure to write the state.json
